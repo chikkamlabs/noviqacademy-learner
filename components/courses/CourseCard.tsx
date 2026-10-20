@@ -177,7 +177,7 @@ export default function CourseCard({
       className={`group relative z-10 hover:z-30 flex flex-col  bg-pure-white rounded-2xl border-2 border-soft-cream hover:border-primary-orange hover:shadow-lg transition-all duration-200 cursor-pointer p-4 sm:p-4.5 select-none ${className}`}
     >
       {/* Top Section */}
-      <div className="space-y-3">
+      <div className="space-y-3 pb-3">
         {/* Course Thumbnail Image (decreased slightly) */}
         <div className="relative w-full h-38 sm:h-42 md:h-46 rounded-xl overflow-hidden bg-soft-cream border border-soft-cream/60 shrink-0">
           {course.preview_media_id ? (
@@ -236,7 +236,7 @@ export default function CourseCard({
       </div>
 
       {/* Bottom Price & Open Course Action (decreased slightly) */}
-      <div className="pt-3 mt-3 border-t border-soft-cream flex items-center justify-between">
+      <div className="pt-3 mt-auto border-t border-soft-cream flex items-center justify-between">
         <div className="flex items-baseline gap-1.5">
           {originalPrice > sellingPrice && (
             <span className="text-xs sm:text-sm text-dark-black/45 line-through font-medium">
@@ -288,9 +288,9 @@ export default function CourseCard({
             }}
             onMouseEnter={handleFlyoutMouseEnter}
             onMouseLeave={handleFlyoutMouseLeave}
-            className={`hidden md:flex flex-col w-[260px] lg:w-[280px] bg-pure-white border-2 border-primary-orange rounded-xl shadow-2xl p-2.5 sm:p-3 text-left absolute top-1/2 -translate-y-1/2 ${
+            className={`hidden md:flex flex-col w-[260px] lg:w-[280px] bg-pure-white border-2 border-primary-orange rounded-xl shadow-2xl p-4 text-left absolute top-1/2 -translate-y-1/2 ${
               flyoutSide === 'left' ? 'right-full mr-3.5' : 'left-full ml-3.5'
-            } z-30 h-auto max-h-[380px] overflow-y-auto [scrollbar-width:thin]`}
+            } z-30 h-auto max-h-[500px] overflow-y-auto [scrollbar-width:thin]`}
           >
             {/* CONNECTING CURLY BRACKET SVG BETWEEN CARD AND HOVERED SECTION */}
             {flyoutSide === 'right' ? (
@@ -343,22 +343,22 @@ export default function CourseCard({
             />
 
             {/* Header in Side Section */}
-            <div className="pb-1 border-b border-soft-cream">
+            <div className="pb-2.5 border-b border-soft-cream">
               <span className="text-[10px] font-bold uppercase tracking-wider text-primary-orange bg-soft-cream px-2 py-0.5 rounded border border-soft-orange/40">
                 Course Quick View
               </span>
-              <h4 className="font-bold text-xs text-dark-black mt-1 line-clamp-1 leading-tight">
+              <h4 className="font-bold text-sm text-dark-black mt-2 line-clamp-1 leading-tight">
                 {course.title}
               </h4>
             </div>
 
             {/* course_learnings (top 2) */}
-            <div className="py-1.5 border-b border-soft-cream space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-dark-black">
+            <div className="py-3 border-b border-soft-cream space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-dark-black">
                 <BookOpen className="w-3 h-3 text-primary-orange shrink-0" />
                 <span>What you&apos;ll learn</span>
               </div>
-              <ul className="space-y-0.5 text-[10.5px] text-dark-black/85">
+              <ul className="space-y-1.5 text-xs text-dark-black/85 min-h-[78px]">
                 {(course.course_learnings && course.course_learnings.length > 0
                   ? course.course_learnings.slice(0, 2)
                   : [
@@ -375,12 +375,12 @@ export default function CourseCard({
             </div>
 
             {/* course_includes (top 2) */}
-            <div className="py-1.5 space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-dark-black">
+            <div className="py-3 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-dark-black">
                 <Layers className="w-3 h-3 text-primary-orange shrink-0" />
                 <span>This course includes</span>
               </div>
-              <ul className="space-y-0.5 text-[10.5px] text-dark-black/85">
+              <ul className="space-y-1.5 text-xs text-dark-black/85 min-h-[78px]">
                 {(course.course_includes && course.course_includes.length > 0
                   ? course.course_includes.slice(0, 2)
                   : [
@@ -397,10 +397,10 @@ export default function CourseCard({
             </div>
 
             {/* Tap / Click to Open Button */}
-            <div className="pt-1.5 mt-auto border-t border-soft-cream">
+            <div className="pt-3 mt-auto border-t border-soft-cream">
               <Link
                 href={courseUrl}
-                className="block w-full py-1.5 px-3 bg-primary-orange text-pure-white font-bold rounded-lg hover:bg-soft-orange hover:text-dark-black transition-colors text-center text-xs shadow-xs"
+                className="block w-full py-2.5 px-3 bg-primary-orange text-pure-white font-bold rounded-lg hover:bg-soft-orange hover:text-dark-black transition-colors text-center text-xs shadow-xs"
               >
                 Go to course details
               </Link>

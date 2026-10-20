@@ -20,6 +20,8 @@ import {
 import { getCourseFullDetails, CourseFullDetails } from '@/lib/coursesStore';
 import { getLearnerProfile } from '@/lib/profilesStore';
 import Header from '@/components/landingpage/header';
+import LearnerHeader from '@/components/learner/header';
+import LearnerBottomNavigation from '@/components/learner/bottomnavigation';
 
 function UdemyPreviewCard({
   course,
@@ -85,7 +87,11 @@ function UdemyPreviewCard({
         {/* Primary CTA */}
         <div className="space-y-2">
           <Link
-            href={isLearnerLoggedIn ? '/learner/dashboard' : '/signup'}
+            href={
+              isLearnerLoggedIn
+                ? `/learner/courseregistration?course_id=${encodeURIComponent(course.id)}`
+                : '/signup'
+            }
             className="block w-full py-3.5 px-4 text-center bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white font-extrabold text-base rounded-xl transition-colors shadow-xs"
           >
             Start Learning Now
@@ -235,7 +241,7 @@ function OpenCourseContent() {
       if (details?.modules) {
         const initialExpanded: Record<string, boolean> = {};
         details.modules.forEach((m) => {
-          initialExpanded[m.id] = true;
+          initialExpanded[m.id] = false;
         });
         setExpandedModules(initialExpanded);
       }
@@ -296,13 +302,17 @@ function OpenCourseContent() {
 
   return (
     <div className="min-h-screen bg-pure-white text-dark-black flex flex-col">
-      {/* Unified Header with Main Navigation Menu preserved */}
-      <Header
-        showBackButton={true}
-        showRegionSelector={!isLearnerLoggedIn}
-        selectedRegion={selectedRegion}
-        onRegionChange={(reg) => setSelectedRegion(reg)}
-      />
+      {/* Header: Learner header if logged in, otherwise public header */}
+      {isLearnerLoggedIn ? (
+        <LearnerHeader />
+      ) : (
+        <Header
+          showBackButton={true}
+          showRegionSelector={!isLearnerLoggedIn}
+          selectedRegion={selectedRegion}
+          onRegionChange={(reg) => setSelectedRegion(reg)}
+        />
+      )}
 
       {/* ============================================================== */}
       {/* MOBILE / TABLET LAYOUT (< lg):                                  */}
@@ -722,9 +732,16 @@ function OpenCourseContent() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-auto py-6 bg-soft-cream/60 border-t border-soft-cream text-center text-xs text-dark-black/60">
+      <footer
+        className={`mt-auto py-6 bg-soft-cream/60 border-t border-soft-cream text-center text-xs text-dark-black/60 ${
+          isLearnerLoggedIn ? 'pb-24 lg:pb-6' : ''
+        }`}
+      >
         &copy; {new Date().getFullYear()} Noviq Academy. All rights reserved.
       </footer>
+
+      {/* Bottom Navigation for Learner */}
+      {isLearnerLoggedIn && <LearnerBottomNavigation />}
     </div>
   );
 }

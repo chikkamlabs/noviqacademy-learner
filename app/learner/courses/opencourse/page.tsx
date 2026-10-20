@@ -80,7 +80,7 @@ function UdemyPreviewCard({
         {/* Primary CTA: Preserves learner auth and navigates to learner registration/dashboard */}
         <div className="space-y-2">
           <Link
-            href={`/learner/courses/dashboard`}
+            href={`/learner/courseregistration?course_id=${course.id}`}
             className="block w-full py-3.5 px-4 text-center bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white font-extrabold text-base rounded-xl transition-colors shadow-xs"
           >
             Start Learning Now
@@ -233,7 +233,7 @@ function LearnerOpenCourseContent() {
       if (details?.modules) {
         const initialExpanded: Record<string, boolean> = {};
         details.modules.forEach((m) => {
-          initialExpanded[m.id] = true;
+          initialExpanded[m.id] = false;
         });
         setExpandedModules(initialExpanded);
       }

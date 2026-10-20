@@ -337,7 +337,7 @@ function CourseRegistrationContent() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
-                href={`/app/learner/openregistration?registration_id=${successResult.registrationId}`}
+                href={`/learner/openregistration?registration_id=${successResult.registrationId}`}
                 className="w-full sm:w-auto px-6 py-3 bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white font-bold rounded-xl text-sm transition-colors shadow-xs text-center"
               >
                 View Registration Details
