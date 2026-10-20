@@ -94,10 +94,10 @@ export default function SignUpPage() {
             </span>
           </Link>
           <h2 className="mt-6 text-2xl sm:text-3xl font-extrabold text-dark-black">
-            Create your account
+            Create Your Account
           </h2>
           <p className="mt-2 text-sm text-dark-black/70">
-            Already a user?{' '}
+            Already a User?{' '}
             <Link
               href="/login"
               className="font-semibold text-primary-orange hover:text-dark-black transition-colors underline"
