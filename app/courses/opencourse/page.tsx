@@ -97,7 +97,7 @@ function UdemyPreviewCard({
             Start Learning Now
           </Link>
           <p className="text-[11px] text-center text-dark-black/60">
-            30-Day Money-Back Guarantee • Full Lifetime Access
+            India/Uk difference is for different timings and payment methods
           </p>
         </div>
       </div>

@@ -85,8 +85,8 @@ function UdemyPreviewCard({
           >
             Start Learning Now
           </Link>
-          <p className="text-[11px] text-center text-dark-black/60">
-            30-Day Money-Back Guarantee • Full Lifetime Access
+          <p className="text-[15px] text-center text-dark-black/60">
+            India/Uk difference is for different timings and payment methods
           </p>
         </div>
       </div>
@@ -377,19 +377,6 @@ function LearnerOpenCourseContent() {
             </div>
           )}
 
-          {/* Instructor & Language */}
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-pure-white/80 border-t border-pure-white/10">
-            <div>
-              Created by{' '}
-              <span className="text-pure-white font-semibold underline">
-                {course.mentor_name || 'Dr. Arjun Rao'}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Globe className="w-3.5 h-3.5 text-primary-orange" />
-              <span>English • Hindi • UK Batches</span>
-            </div>
-          </div>
         </div>
 
         {/* 3. WHAT YOU'LL LEARN: Picked up slightly into dark hero */}
@@ -471,7 +458,7 @@ function LearnerOpenCourseContent() {
               </div>
               <div className="space-y-1">
                 <h3 className="font-bold text-base text-dark-black">
-                  {course.mentor_name || 'Dr. Arjun Rao'}
+                  {course.mentor_name || 'Noviq Academy Senior mentor'}
                 </h3>
                 <p className="text-xs font-semibold text-primary-orange">
                   Senior Industry Lead &amp; Mentor
@@ -554,18 +541,7 @@ function LearnerOpenCourseContent() {
               )}
 
               {/* Instructor & Language */}
-              <div className="pt-4 flex flex-wrap items-center gap-6 text-xs sm:text-sm text-pure-white/80 border-t border-pure-white/10 max-w-2xl">
-                <div>
-                  Created by{' '}
-                  <span className="text-pure-white font-semibold underline">
-                    {course.mentor_name || 'Dr. Arjun Rao'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-primary-orange" />
-                  <span>English • Hindi • UK Batches</span>
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -650,7 +626,7 @@ function LearnerOpenCourseContent() {
                   </div>
                   <div className="space-y-1 max-w-lg">
                     <h3 className="font-bold text-lg text-dark-black">
-                      {course.mentor_name || 'Dr. Arjun Rao'}
+                      {course.mentor_name || 'Noviq academy senior mentor'}
                     </h3>
                     <p className="text-xs font-semibold text-primary-orange">
                       Senior Industry Lead &amp; Mentor
