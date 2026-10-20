@@ -210,13 +210,13 @@ export default function PublicExploreCoursesPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-6 justify-items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-2 gap-5 items-start justify-items-center">
                 {filteredCourses.map((course) => (
                   <CourseCard
                     key={course.id}
                     course={course}
                     region={selectedRegion}
-                    className="w-full max-w-[460px] h-[540px] sm:h-[560px]"
+                    className="w-full max-w-[360px] "
                   />
                 ))}
               </div>

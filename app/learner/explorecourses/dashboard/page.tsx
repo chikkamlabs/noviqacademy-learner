@@ -150,7 +150,7 @@ export default function ExploreCoursesDashboardPage() {
       </section>
 
       {/* 3. Main Content Area: Left Courses Grid & Right-most Filters Sidebar (same as publicexplorecourses) */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 pb-28">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 pb-40 sm:pb-48">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
           
           {/* Main Courses Area (Left/Center) */}
@@ -213,13 +213,14 @@ export default function ExploreCoursesDashboardPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-6 justify-items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-2 gap-6 justify-items-center">
                 {filteredCourses.map((course) => (
                   <CourseCard
                     key={course.id}
                     course={course}
                     region={selectedRegion}
-                    className="w-full max-w-[460px] h-[540px] sm:h-[560px]"
+                    hrefPrefix="/learner/courses/opencourse"
+                    className="w-full max-w-[360px]"
                   />
                 ))}
               </div>
@@ -272,7 +273,7 @@ export default function ExploreCoursesDashboardPage() {
             </div>
 
             {/* Topics List: Responsive (horizontal scroll on mobile, vertical list on desktop) */}
-            <div className="mt-2 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto max-h-none lg:max-h-[calc(100vh-230px)] pb-1.5 lg:pb-0 [scrollbar-width:thin]">
+            <div className="mt-2 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto max-h-none lg:max-h-[calc(100vh-270px)] pb-6 pr-4 lg:pr-1 [scrollbar-width:thin]">
               {/* All Topics (Only shown when not actively filtering topics with search query) */}
               {!topicSearch && (
                 <button

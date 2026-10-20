@@ -6,6 +6,7 @@ export interface SignUpLearnerParams {
   region: string;
   email: string;
   password: string;
+  referral_code?: string;
 }
 
 export interface SignInLearnerParams {
@@ -22,6 +23,7 @@ export async function signUpLearner({
   region,
   email,
   password,
+  referral_code,
 }: SignUpLearnerParams) {
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -34,12 +36,25 @@ export async function signUpLearner({
           mobile,
           region,
           role: 'learner',
+          referral_code,
         },
       },
     });
 
     if (error) {
       return { success: false, error: error.message, data: null };
+    }
+
+    if (data.user && referral_code) {
+      try {
+        await supabase.from('learner_profile').upsert({
+          id: data.user.id,
+          region: region === 'uk' ? 'uk' : 'india',
+          referral_code,
+        });
+      } catch {
+        // Ignored; trigger will handle or fallback is fine
+      }
     }
 
     return { success: true, error: null, data };

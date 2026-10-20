@@ -114,7 +114,7 @@ export default function TrendingCoursesSection() {
                 key={course.id}
                 course={course}
                 region={selectedRegion}
-                className="w-[330px] sm:w-[360px] md:w-[380px] h-[540px] sm:h-[560px] shrink-0 snap-start"
+                className="w-[300px] sm:w-[320px] md:w-[340px] shrink-0 snap-start"
               />
             ))}
           </div>

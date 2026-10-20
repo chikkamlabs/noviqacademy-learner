@@ -64,13 +64,14 @@ export default function ExploreCourse({ featuredOnly = false }: ExploreCoursePro
             : 'No courses available at the moment.'}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-start justify-items-center">
           {courses.map((course) => (
             <CourseCard
               key={course.id}
               course={course}
               region={learnerRegion}
-              className="w-full max-w-[380px] h-[540px] sm:h-[560px]"
+              hrefPrefix="/learner/courses/opencourse"
+              className="w-full max-w-[360px]"
             />
           ))}
         </div>

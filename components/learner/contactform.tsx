@@ -1,311 +1,265 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  X,
-  Send,
-  MessageSquare,
-  HelpCircle,
-  Phone,
-  BookOpen,
-} from 'lucide-react';
-import { getLearnerProfile } from '@/lib/profilesStore';
+import { X, Send, MessageCircle, AlertCircle, CheckCircle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
-interface LearnerContactFormProps {
+interface ContactFormProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultCourseTitle?: string;
 }
 
-export default function LearnerContactForm({
-  isOpen,
-  onClose,
-  defaultCourseTitle,
-}: LearnerContactFormProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    mobile: '',
-    reason: 'Doubt Support & Concept Clarification',
-    courseOrBatch: defaultCourseTitle || '',
-    note: '',
-  });
+const LEARNER_REASONS = [
+  'Doubt Clarification & Mentor Guidance',
+  'Live Class Schedule & Meeting Link',
+  'Assignment, Project & Code Review',
+  'LMS & Course Portal Access Issue',
+  'Certificate & Course Completion Query',
+  'Batch Rescheduling & Transfer Request',
+  'Course Upgrade & Advanced Track Guidance',
+  'Other Enrolled Learner Support',
+] as const;
 
+export default function LearnerContactForm({ isOpen, onClose }: ContactFormProps) {
+  const [reason, setReason] = useState<string>(LEARNER_REASONS[0]);
+  const [learnerName, setLearnerName] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [queryDetails, setQueryDetails] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Pre-fill learner name and mobile if available
+  // Attempt to autofill learner name if session exists
   useEffect(() => {
-    async function loadProfile() {
+    if (!isOpen) return;
+
+    let isMounted = true;
+    async function loadUserData() {
       try {
-        const profile = await getLearnerProfile();
-        if (profile) {
-          setFormData((prev) => ({
-            ...prev,
-            name: prev.name || profile.name || '',
-            mobile: prev.mobile || profile.mobile || '',
-          }));
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user && isMounted) {
+          const name =
+            user.user_metadata?.name ||
+            user.user_metadata?.full_name ||
+            user.email?.split('@')[0] ||
+            '';
+          if (name && !learnerName) {
+            setLearnerName(name);
+          }
         }
-      } catch (err) {
-        console.warn('Error fetching learner profile for contact form:', err);
+      } catch {
+        // Ignore auth fetch failures for prefilling
       }
     }
-    if (isOpen) {
-      loadProfile();
-    }
-  }, [isOpen]);
 
-  // Handle ESC key
-  useEffect(() => {
+    loadUserData();
+
+    // Lock body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+
+    // Handle ESC key to close
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+      }
     };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      isMounted = false;
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose, learnerName]);
 
   if (!isOpen) return null;
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-    if (error) setError('');
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-    if (!formData.mobile.trim()) {
-      setError('Please enter your mobile or WhatsApp number');
-      return;
-    }
-    if (!formData.note.trim()) {
-      setError('Please describe your query or doubt');
+    if (!learnerName.trim()) {
+      setError('Please provide your name.');
       return;
     }
 
-    // Formatted WhatsApp message from enrolled learner perspective
+    if (!reason.trim()) {
+      setError('Please select a reason.');
+      return;
+    }
+
+    setError('');
+    setIsSubmitting(true);
+
     const messageLines = [
       'Hello Noviq Academy! 👋',
       '',
       '*[Enrolled Learner Support Request]*',
-      `*Name:* ${formData.name.trim()}`,
-      `*Mobile:* ${formData.mobile.trim()}`,
-      `*Reason:* ${formData.reason}`,
-      formData.courseOrBatch.trim()
-        ? `*Course / Batch:* ${formData.courseOrBatch.trim()}`
-        : '',
-      `*Message:* ${formData.note.trim()}`,
+      `*Learner Name:* ${learnerName.trim()}`,
+      courseName.trim() ? `*Enrolled Course:* ${courseName.trim()}` : '',
+      `*Reason:* ${reason}`,
+      queryDetails.trim() ? `*Details / Doubt:* ${queryDetails.trim()}` : '',
       '',
-      'Sent from Noviq Academy Learner Dashboard',
+      'Sent from Noviq Learner Portal',
     ].filter(Boolean);
 
     const formatted = messageLines.join('\n');
-    const targetUrl = `https://wa.me/447867261674?text=${encodeURIComponent(
-      formatted
-    )}`;
+    const targetUrl = `https://wa.me/447867261674?text=${encodeURIComponent(formatted)}`;
 
+    // Navigate to WhatsApp
     window.location.href = targetUrl;
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      onClose();
+    }, 400);
   };
 
   return (
     <div
-      role="dialog"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      onClick={onClose}
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-dark-black/65 backdrop-blur-xs animate-in fade-in duration-200"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      role="dialog"
     >
-      <div className="relative w-full max-w-lg bg-pure-white rounded-2xl border-2 border-soft-cream shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-        {/* Header */}
-        <div className="p-4 sm:p-5 bg-pure-white border-b border-soft-cream flex items-start justify-between gap-3 shrink-0">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-soft-cream text-primary-orange text-[11px] font-bold uppercase tracking-wider border border-soft-orange/40">
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Learner Support Desk</span>
-            </div>
+      <div
+        className="relative w-full max-w-lg bg-pure-white rounded-2xl border-2 border-soft-cream shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto text-dark-black"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-dark-black/60 hover:text-dark-black hover:bg-soft-cream rounded-full transition-colors"
+          aria-label="Close dialog"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Modal Header */}
+        <div className="flex items-center gap-2.5 mb-2">
+          <div className="p-2 bg-soft-cream rounded-xl text-primary-orange">
+            <MessageCircle className="w-5 h-5 text-primary-orange" />
+          </div>
+          <div>
             <h2 className="text-xl sm:text-2xl font-black text-dark-black tracking-tight">
-              Enrolled Learner Help
+              Learner Support
             </h2>
-            <p className="text-xs text-dark-black/70">
-              Connect directly with our academic coordinators and mentor leads on WhatsApp (+44 7867 261674).
+            <p className="text-xs sm:text-sm text-dark-black/70">
+              Assistance for enrolled learners &amp; active coursework
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-xl text-dark-black/50 hover:text-dark-black hover:bg-soft-cream transition-colors shrink-0 cursor-pointer"
-            aria-label="Close support modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
-        {/* Form Body */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 [scrollbar-width:thin]"
-        >
-          {/* Reason (from enrolled learner perspective) */}
+        <hr className="border-soft-cream my-4" />
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Reason Selection */}
           <div className="space-y-1.5">
             <label
-              htmlFor="learner-reason-select"
-              className="block text-xs sm:text-sm font-bold text-dark-black flex items-center gap-1.5"
+              htmlFor="support-reason"
+              className="block text-xs sm:text-sm font-bold text-dark-black"
             >
-              <HelpCircle className="w-4 h-4 text-primary-orange" />
-              <span>
-                Reason for Contact <span className="text-primary-orange">*</span>
-              </span>
+              Select Reason <span className="text-primary-orange">*</span>
             </label>
             <select
-              id="learner-reason-select"
-              name="reason"
-              value={formData.reason}
-              onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs text-dark-black font-medium"
+              id="support-reason"
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value);
+                if (error) setError('');
+              }}
+              className="w-full px-4 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs text-dark-black"
             >
-              <option value="Doubt Support & Concept Clarification">
-                Doubt Support &amp; Concept Clarification
-              </option>
-              <option value="Live Batch Timings & Class Reschedule">
-                Live Batch Timings &amp; Class Reschedule
-              </option>
-              <option value="Assignment & Project Review Assistance">
-                Assignment &amp; Project Review Assistance
-              </option>
-              <option value="Lab Environment, Compiler & Tool Access">
-                Lab Environment, Compiler &amp; Tool Access
-              </option>
-              <option value="1-on-1 Mentor Guidance Session Request">
-                1-on-1 Mentor Guidance Session Request
-              </option>
-              <option value="Course Completion & Certificate Issuance">
-                Course Completion &amp; Certificate Issuance
-              </option>
-              <option value="Exam, Quiz & Assessment Inquiries">
-                Exam, Quiz &amp; Assessment Inquiries
-              </option>
-              <option value="Batch Feedback & Coordinator Assistance">
-                Batch Feedback &amp; Coordinator Assistance
-              </option>
-              <option value="Other Enrolled Learner Support">
-                Other Enrolled Learner Support
-              </option>
+              {LEARNER_REASONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Full Name */}
+          {/* Learner Name */}
           <div className="space-y-1.5">
             <label
-              htmlFor="learner-name"
-              className="block text-xs sm:text-sm font-semibold text-dark-black"
+              htmlFor="support-name"
+              className="block text-xs sm:text-sm font-bold text-dark-black"
             >
-              Full Name <span className="text-primary-orange">*</span>
+              Your Name <span className="text-primary-orange">*</span>
             </label>
             <input
-              id="learner-name"
+              id="support-name"
               type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
+              value={learnerName}
+              onChange={(e) => {
+                setLearnerName(e.target.value);
+                if (error) setError('');
+              }}
               placeholder="Enter your name"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs"
+              className="w-full px-4 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs text-dark-black"
             />
           </div>
 
-          {/* Mobile / WhatsApp Number */}
+          {/* Enrolled Course Name */}
           <div className="space-y-1.5">
             <label
-              htmlFor="learner-mobile"
-              className="block text-xs sm:text-sm font-semibold text-dark-black flex items-center gap-1.5"
-            >
-              <Phone className="w-3.5 h-3.5 text-primary-orange" />
-              <span>
-                Mobile / WhatsApp Number <span className="text-primary-orange">*</span>
-              </span>
-            </label>
-            <input
-              id="learner-mobile"
-              type="tel"
-              name="mobile"
-              value={formData.mobile}
-              onChange={handleChange}
-              placeholder="e.g. +44 7867 261674 or +91 98765 43210"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs"
-            />
-          </div>
-
-          {/* Course / Batch Name */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="learner-course-batch"
-              className="block text-xs sm:text-sm font-semibold text-dark-black flex items-center gap-1.5"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-primary-orange" />
-              <span>Enrolled Course / Batch (Optional)</span>
-            </label>
-            <input
-              id="learner-course-batch"
-              type="text"
-              name="courseOrBatch"
-              value={formData.courseOrBatch}
-              onChange={handleChange}
-              placeholder="e.g. Full Stack Web Development (Batch 01)"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs"
-            />
-          </div>
-
-          {/* Detailed Message */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="learner-message-note"
+              htmlFor="support-course"
               className="block text-xs sm:text-sm font-semibold text-dark-black"
             >
-              How can we assist you? <span className="text-primary-orange">*</span>
+              Enrolled Course / Batch <span className="text-dark-black/40 text-xs font-normal">(Optional)</span>
+            </label>
+            <input
+              id="support-course"
+              type="text"
+              value={courseName}
+              onChange={(e) => setCourseName(e.target.value)}
+              placeholder="e.g. Full Stack Web Development or Batch UK-04"
+              className="w-full px-4 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs text-dark-black"
+            />
+          </div>
+
+          {/* Query Details */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="support-details"
+              className="block text-xs sm:text-sm font-semibold text-dark-black"
+            >
+              Details / Question <span className="text-dark-black/40 text-xs font-normal">(Optional)</span>
             </label>
             <textarea
-              id="learner-message-note"
-              name="note"
+              id="support-details"
               rows={3}
-              value={formData.note}
-              onChange={handleChange}
-              placeholder="Explain your doubt, topic, code error, or query in detail..."
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs resize-none"
+              value={queryDetails}
+              onChange={(e) => setQueryDetails(e.target.value)}
+              placeholder="Describe your doubt, portal issue, or class schedule question..."
+              className="w-full px-4 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs resize-none text-dark-black"
             />
           </div>
 
-          {/* Error notice */}
+          {/* Error message */}
           {error && (
-            <p className="text-xs font-semibold text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
-              {error}
-            </p>
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-200 text-xs font-semibold">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
           )}
 
-          {/* Submit Button */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              className="w-full py-3 px-5 flex items-center justify-center gap-2 bg-primary-orange text-pure-white font-bold text-sm sm:text-base rounded-xl hover:bg-soft-orange hover:text-dark-black transition-colors shadow-xs cursor-pointer"
-            >
-              <span>Send via WhatsApp (+44 7867 261674)</span>
-              <Send className="w-4 h-4" />
-            </button>
-            <p className="text-[11px] text-center text-dark-black/60 pt-2">
-              You will be redirected to WhatsApp with your formatted inquiry for immediate mentor assistance.
-            </p>
-          </div>
+          {/* WhatsApp Action Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full mt-3 py-3 px-6 flex items-center justify-center gap-2 bg-primary-orange text-pure-white font-bold text-sm sm:text-base rounded-xl hover:bg-soft-orange hover:text-dark-black transition-colors shadow-xs cursor-pointer disabled:opacity-60"
+          >
+            <span>{isSubmitting ? 'Opening WhatsApp...' : 'Send to WhatsApp'}</span>
+            <Send className="w-4 h-4" />
+          </button>
+
+          {/* Note regarding WhatsApp number */}
+          <p className="text-[11px] text-center text-dark-black/60 pt-1">
+            Connects directly to Noviq Academy Support on WhatsApp at <strong className="text-dark-black">+44 7867 261674</strong>.
+          </p>
         </form>
       </div>
     </div>
