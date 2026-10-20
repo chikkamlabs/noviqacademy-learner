@@ -105,7 +105,7 @@ export default function LearnerContactForm({ isOpen, onClose }: ContactFormProps
     ].filter(Boolean);
 
     const formatted = messageLines.join('\n');
-    const targetUrl = `https://wa.me/8184871722?text=${encodeURIComponent(formatted)}`;
+    const targetUrl = `https://wa.me/918184871722?text=${encodeURIComponent(formatted)}`;
 
     // Navigate to WhatsApp
     window.location.href = targetUrl;

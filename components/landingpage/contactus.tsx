@@ -123,7 +123,7 @@ export default function ContactUsSection() {
       ].filter(Boolean);
 
       const formatted = messageLines.join('\n');
-      const targetUrl = `https://wa.me/8184871722?text=${encodeURIComponent(formatted)}`;
+      const targetUrl = `https://wa.me/918184871722?text=${encodeURIComponent(formatted)}`;
       window.location.href = targetUrl;
     } else {
       // Mentor Form
@@ -157,7 +157,7 @@ export default function ContactUsSection() {
       ].filter(Boolean);
 
       const formatted = messageLines.join('\n');
-      const targetUrl = `https://wa.me/8184871722?text=${encodeURIComponent(formatted)}`;
+      const targetUrl = `https://wa.me/918184871722?text=${encodeURIComponent(formatted)}`;
       window.location.href = targetUrl;
     }
   };
