@@ -105,7 +105,7 @@ export default function LearnerContactForm({ isOpen, onClose }: ContactFormProps
     ].filter(Boolean);
 
     const formatted = messageLines.join('\n');
-    const targetUrl = `https://wa.me/447867261674?text=${encodeURIComponent(formatted)}`;
+    const targetUrl = `https://wa.me/8184871722?text=${encodeURIComponent(formatted)}`;
 
     // Navigate to WhatsApp
     window.location.href = targetUrl;
@@ -258,7 +258,7 @@ export default function LearnerContactForm({ isOpen, onClose }: ContactFormProps
 
           {/* Note regarding WhatsApp number */}
           <p className="text-[11px] text-center text-dark-black/60 pt-1">
-            Connects directly to Noviq Academy Support on WhatsApp at <strong className="text-dark-black">+44 7867 261674</strong>.
+            Connects directly to Noviq Academy Support on WhatsApp at <strong className="text-dark-black">+91 8184871722</strong>.
           </p>
         </form>
       </div>

@@ -25,30 +25,39 @@ export default function Header({
   const router = useRouter();
 
   useEffect(() => {
-    const updateCouponsHeight = () => {
-      const el = document.getElementById('coupons-section');
-      if (el) {
-        setCouponsHeight(el.offsetHeight);
-      } else {
-        setCouponsHeight(0);
-      }
-    };
+  let observed: HTMLElement | null = null;
 
-    updateCouponsHeight();
-    window.addEventListener('resize', updateCouponsHeight);
+  const ro =
+    typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => update())
+      : null;
 
+  function update() {
     const el = document.getElementById('coupons-section');
-    let observer: ResizeObserver | null = null;
-    if (el && typeof ResizeObserver !== 'undefined') {
-      observer = new ResizeObserver(updateCouponsHeight);
-      observer.observe(el);
-    }
+    setCouponsHeight(el ? el.getBoundingClientRect().height : 0);
 
-    return () => {
-      window.removeEventListener('resize', updateCouponsHeight);
-      if (observer) observer.disconnect();
-    };
-  }, []);
+    // (re)attach the ResizeObserver if the element appeared/changed
+    if (el !== observed) {
+      if (observed) ro?.unobserve(observed);
+      observed = el;
+      if (el) ro?.observe(el);
+    }
+  }
+
+  update();
+
+  // Coupons render after an async fetch, so watch the DOM for it
+  const mo = new MutationObserver(update);
+  mo.observe(document.body, { childList: true, subtree: true });
+
+  window.addEventListener('resize', update);
+
+  return () => {
+    window.removeEventListener('resize', update);
+    mo.disconnect();
+    ro?.disconnect();
+  };
+}, []);
 
   // Handle hash scrolling when page loads with #why-us or #contact-us
   useEffect(() => {

@@ -123,7 +123,7 @@ export default function ContactUsSection() {
       ].filter(Boolean);
 
       const formatted = messageLines.join('\n');
-      const targetUrl = `https://wa.me/447867261674?text=${encodeURIComponent(formatted)}`;
+      const targetUrl = `https://wa.me/8184871722?text=${encodeURIComponent(formatted)}`;
       window.location.href = targetUrl;
     } else {
       // Mentor Form
@@ -157,7 +157,7 @@ export default function ContactUsSection() {
       ].filter(Boolean);
 
       const formatted = messageLines.join('\n');
-      const targetUrl = `https://wa.me/447867261674?text=${encodeURIComponent(formatted)}`;
+      const targetUrl = `https://wa.me/8184871722?text=${encodeURIComponent(formatted)}`;
       window.location.href = targetUrl;
     }
   };
@@ -255,7 +255,7 @@ export default function ContactUsSection() {
             <div className="pt-4 border-t border-soft-cream flex flex-wrap gap-6 text-xs sm:text-sm text-dark-black/75">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-primary-orange" />
-                <span className="font-semibold">+44 7867 261674</span>
+                <span className="font-semibold">+91 81848 71722</span>
               </div>
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-primary-orange" />
@@ -352,7 +352,7 @@ export default function ContactUsSection() {
                       name="mobile"
                       value={learnerData.mobile}
                       onChange={handleLearnerChange}
-                      placeholder="e.g. +44 7867 261674 or +91 98765 43210"
+                      placeholder="e.g. 1234567890"
                       className="w-full px-4 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs"
                     />
                   </div>
@@ -425,7 +425,7 @@ export default function ContactUsSection() {
                         name="mobile"
                         value={mentorData.mobile}
                         onChange={handleMentorChange}
-                        placeholder="e.g. +44 7867 261674"
+                        placeholder="e.g. +91 8184871722"
                         className="w-full px-4 py-2.5 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/15 focus:outline-hidden focus:border-primary-orange shadow-2xs"
                       />
                     </div>
@@ -538,7 +538,7 @@ export default function ContactUsSection() {
               </button>
 
               <p className="text-[11px] text-center text-dark-black/60 pt-1">
-                Tapping {formType === 'learner' ? 'Contact' : 'Submit'} will redirect you to +44 7867 261674 with your formatted {formType === 'learner' ? 'inquiry' : 'application'}.
+                Tapping {formType === 'learner' ? 'Contact' : 'Submit'} will redirect you to +91 8184871722 with your formatted {formType === 'learner' ? 'inquiry' : 'application'}.
               </p>
             </form>
           </div>
