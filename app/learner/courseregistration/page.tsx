@@ -202,7 +202,7 @@ function CourseRegistrationContent() {
     }
   };
 
-  // Handle Pay Now click
+  // Handle Register & Pay Now click via Cashfree Payments
   const handlePayNow = async () => {
     if (!course) {
       setErrorMsg('Course information is missing.');
@@ -214,28 +214,77 @@ function CourseRegistrationContent() {
       return;
     }
 
+    if (!learner?.id) {
+      setErrorMsg('You must be logged in as a learner to proceed with registration.');
+      return;
+    }
+
+    if (!learner?.email) {
+      setErrorMsg('Learner email is required. Please ensure your email is updated on your profile.');
+      return;
+    }
+
+    const cleanedPhone = (learner?.mobile || '').replace(/[^0-9]/g, '');
+    if (!cleanedPhone || cleanedPhone.length < 10) {
+      setErrorMsg(
+        'A valid 10-digit mobile number is required on your profile to initiate Cashfree payment. Please update your profile.'
+      );
+      return;
+    }
+
     setSubmitting(true);
     setErrorMsg('');
 
-    const res = await createCourseRegistration({
-      course_id: course.id,
-      batch_id: selectedBatch.id,
-      amount: totalPayable,
-      currency,
-    });
-
-    if (res.success && res.registration_id) {
-      setSuccessResult({
-        registrationId: res.registration_id,
-        courseTitle: course.title,
-        batchCode: selectedBatch.batch_id,
-        finalAmount: totalPayable,
+    try {
+      // 1. Create order via Cashfree create_order API route with real authenticated data
+      const response = await fetch('/api/payments/cashfree/create_order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          course_id: course.id,
+          batch_id: selectedBatch.id,
+          amount: totalPayable,
+          currency,
+          coupon_code: appliedCoupon?.code,
+          customer_details: {
+            customer_id: learner.id,
+            customer_name: learner.name || 'Learner',
+            customer_email: learner.email,
+            customer_phone: cleanedPhone.slice(-10),
+          },
+        }),
       });
-    } else {
-      setErrorMsg(res.error || 'Failed to complete registration. Please try again.');
-    }
 
-    setSubmitting(false);
+      const orderData = await response.json();
+
+      if (!response.ok || !orderData.success) {
+        throw new Error(orderData.error || 'Failed to initialize Cashfree payment.');
+      }
+
+      if (!orderData.payment_session_id) {
+        throw new Error('Cashfree did not return a valid payment_session_id.');
+      }
+
+      // 2. Launch Cashfree PG checkout using official SDK
+      const { load } = await import('@cashfreepayments/cashfree-js');
+      const cashfreeMode =
+        orderData.mode === 'production' ? 'production' : 'sandbox';
+
+      const cashfree = await load({ mode: cashfreeMode });
+
+      await cashfree.checkout({
+        paymentSessionId: orderData.payment_session_id,
+        redirectTarget: '_self',
+      });
+    } catch (err: unknown) {
+      console.error('[Cashfree initiation error]:', err);
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Failed to initiate Cashfree payment. Please try again.';
+      setErrorMsg(msg);
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -337,7 +386,7 @@ function CourseRegistrationContent() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
-                href={`/learner/openregistration?registration_id=${successResult.registrationId}`}
+                href={`/app/learner/openregistration?registration_id=${successResult.registrationId}`}
                 className="w-full sm:w-auto px-6 py-3 bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white font-bold rounded-xl text-sm transition-colors shadow-xs text-center"
               >
                 View Registration Details
@@ -640,7 +689,7 @@ function CourseRegistrationContent() {
                 </div>
               </div>
 
-              {/* Pay Now Button */}
+              {/* Register & Pay Now Button */}
               <div className="pt-2">
                 <button
                   type="button"
@@ -651,13 +700,13 @@ function CourseRegistrationContent() {
                   {submitting ? (
                     <>
                       <div className="w-5 h-5 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
-                      <span>Processing Registration...</span>
+                      <span>Initiating Cashfree Payment...</span>
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="w-5 h-5" />
                       <span>
-                        Pay Now ({currencySymbol}
+                        Register &amp; Pay Now ({currencySymbol}
                         {totalPayable.toLocaleString()})
                       </span>
                     </>
@@ -666,13 +715,12 @@ function CourseRegistrationContent() {
 
                 {!hasConfirmedContinue && eligibleBatchInfo && (
                   <p className="text-[11px] text-primary-orange text-center font-medium mt-2">
-                    Please click &quot;Continue with this course&quot; above to enable Pay Now.
+                    Please click &quot;Continue with this course&quot; above to enable Register &amp; Pay Now.
                   </p>
                 )}
 
                 <p className="text-[11px] text-center text-dark-black/50 mt-2">
-                  Instant activation with status: <strong>active</strong>. Registration ID
-                  formatted as REG-XXXXX.
+                  Secure checkout via Cashfree Payments. Instant activation with status: <strong>active</strong>.
                 </p>
               </div>
             </div>
