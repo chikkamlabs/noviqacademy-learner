@@ -214,11 +214,29 @@ function CourseRegistrationContent() {
       return;
     }
 
+    if (!learner?.id) {
+      setErrorMsg('You must be logged in as a learner to proceed with registration.');
+      return;
+    }
+
+    if (!learner?.email) {
+      setErrorMsg('Learner email is required. Please ensure your email is updated on your profile.');
+      return;
+    }
+
+    const cleanedPhone = (learner?.mobile || '').replace(/[^0-9]/g, '');
+    if (!cleanedPhone || cleanedPhone.length < 10) {
+      setErrorMsg(
+        'A valid 10-digit mobile number is required on your profile to initiate Cashfree payment. Please update your profile.'
+      );
+      return;
+    }
+
     setSubmitting(true);
     setErrorMsg('');
 
     try {
-      // 1. Create order via Cashfree create_order API route
+      // 1. Create order via Cashfree create_order API route with real authenticated data
       const response = await fetch('/api/payments/cashfree/create_order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -229,10 +247,10 @@ function CourseRegistrationContent() {
           currency,
           coupon_code: appliedCoupon?.code,
           customer_details: {
-            customer_id: learner?.id || 'learner_' + Date.now(),
-            customer_name: learner?.name || 'Learner',
-            customer_email: learner?.email || 'learner@noviqacademy.com',
-            customer_phone: learner?.mobile || '9999999999',
+            customer_id: learner.id,
+            customer_name: learner.name || 'Learner',
+            customer_email: learner.email,
+            customer_phone: cleanedPhone.slice(-10),
           },
         }),
       });
@@ -243,22 +261,18 @@ function CourseRegistrationContent() {
         throw new Error(orderData.error || 'Failed to initialize Cashfree payment.');
       }
 
-      // If simulated or test mode without API keys configured
-      if (orderData.is_mock || !orderData.payment_session_id) {
-        router.push(
-          `/cashfree/success?order_id=${encodeURIComponent(orderData.order_id)}&mock=true`
-        );
-        return;
+      if (!orderData.payment_session_id) {
+        throw new Error('Cashfree did not return a valid payment_session_id.');
       }
 
-      // 2. Launch Cashfree PG checkout using SDK
+      // 2. Launch Cashfree PG checkout using official SDK
       const { load } = await import('@cashfreepayments/cashfree-js');
       const cashfreeMode =
         orderData.mode === 'production' ? 'production' : 'sandbox';
 
       const cashfree = await load({ mode: cashfreeMode });
 
-      cashfree.checkout({
+      await cashfree.checkout({
         paymentSessionId: orderData.payment_session_id,
         redirectTarget: '_self',
       });

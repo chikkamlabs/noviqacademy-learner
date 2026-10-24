@@ -319,14 +319,14 @@ function RegistrationDetailContent() {
             <div className="flex items-center justify-between py-2 border-b border-soft-cream/60">
               <span className="text-dark-black/60 font-medium">Transaction / Payment ID</span>
               <span className="font-mono text-dark-black font-semibold text-xs truncate max-w-[210px]">
-                {payment?.provider_payment_id || `pay_${detail.registration_id}`}
+                {payment?.provider_payment_id || `-`}
               </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-soft-cream/60">
               <span className="text-dark-black/60 font-medium">Payment Timestamp</span>
               <span className="font-bold text-dark-black">
-                {formatReadableDateTime(payment?.paid_at || detail.created_at)}
+                {formatReadableDateTime(payment?.paid_at || '-')}
               </span>
             </div>
 

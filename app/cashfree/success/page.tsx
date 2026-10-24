@@ -33,7 +33,6 @@ function CashfreeSuccessContent() {
   const router = useRouter();
 
   const orderId = searchParams.get('order_id') || searchParams.get('cf_id') || '';
-  const isMockParam = searchParams.get('mock') === 'true';
 
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<VerificationResult | null>(null);
@@ -55,33 +54,35 @@ function CashfreeSuccessContent() {
         const res = await fetch(`/api/payments/cashfree/verify?order_id=${encodeURIComponent(orderId)}`);
         const data = await res.json();
 
-        if (data.success) {
-          setResult(data);
-        } else {
-          // If in test mode or unconfirmed
-          if (isMockParam) {
-            setResult({
-              success: true,
-              order_id: orderId,
-              registration_id: data.registration_id || `REG-${Math.floor(10000 + Math.random() * 90000)}`,
-              amount: data.amount || 1000,
-              currency: data.currency || 'INR',
-              status: 'PAID',
-            });
-          } else {
-            setErrorMsg(data.message || 'Payment verification could not be confirmed.');
-          }
-        }
+        if (data.success && ['PAID', 'SUCCESS'].includes(
+  String(data.status || '').toUpperCase()
+)) {
+  setResult(data);
+} else {
+  const status = String(data.status || '').toUpperCase();
+
+  if (['FAILED', 'USER_DROPPED', 'CANCELLED', 'EXPIRED'].includes(status)) {
+    router.replace(
+      `/cashfree/failed?order_id=${encodeURIComponent(orderId)}`
+    );
+    return;
+  }
+
+  setErrorMsg(
+    data.error || data.message || 'Payment status is still being confirmed.'
+  );
+}
       } catch (err: unknown) {
         console.error('Error verifying Cashfree order:', err);
-        setErrorMsg('Failed to communicate with payment verification service.');
+        const msg = err instanceof Error ? err.message : 'Failed to communicate with payment verification service.';
+        setErrorMsg(msg);
       } finally {
         setLoading(false);
       }
     }
 
     verifyPayment();
-  }, [orderId, isMockParam]);
+  }, [orderId]);
 
   const copyRegistrationId = (text: string) => {
     if (navigator.clipboard) {
@@ -228,7 +229,7 @@ function CashfreeSuccessContent() {
 
               {result.registration_id && (
                 <Link
-                  href={`/app/learner/openregistration?registration_id=${result.registration_id}`}
+                  href={`/learner/openregistration?registration_id=${result.registration_id}`}
                   className="w-full sm:w-auto px-6 py-3 bg-pure-white hover:bg-soft-cream text-dark-black font-bold rounded-xl text-sm border border-dark-black/15 transition-colors inline-flex items-center justify-center gap-2"
                 >
                   <Calendar className="w-4 h-4" />
