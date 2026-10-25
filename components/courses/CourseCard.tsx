@@ -191,7 +191,7 @@ export default function CourseCard({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-soft-cream text-dark-black font-semibold text-sm">
-              Noviq Academy
+              NoviQ Academy
             </div>
           )}
           <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-md bg-dark-black/90 text-pure-white text-xs font-bold backdrop-blur-xs shadow-xs">

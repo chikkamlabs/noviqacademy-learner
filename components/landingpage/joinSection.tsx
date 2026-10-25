@@ -7,6 +7,8 @@ import { ArrowRight, Check } from 'lucide-react';
 export default function JoinSection() {
   const provisions = [
     'Real time mentorship',
+    'Certification',
+    'CV & Linkedin Guidance',
     'Batch wise learnings',
     'More Lab sessions',
     'access to industry level Resources',

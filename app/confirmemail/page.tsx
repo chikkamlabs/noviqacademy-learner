@@ -19,7 +19,7 @@ export default function ConfirmEmailPage() {
               />
             </div>
             <span className="text-xl font-bold tracking-tight text-dark-black">
-              Noviq Academy
+              NoviQ Academy
             </span>
           </Link>
           <Link
@@ -70,7 +70,7 @@ export default function ConfirmEmailPage() {
           <div className="flex flex-col justify-center lg:pl-6 space-y-6">
             <div className="flex items-center gap-2 text-primary-orange font-semibold text-sm uppercase tracking-wider">
               <Sparkles className="w-4 h-4" />
-              <span>Welcome to Noviq Academy</span>
+              <span>Welcome to NoviQ Academy</span>
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold text-dark-black tracking-tight">
@@ -78,7 +78,7 @@ export default function ConfirmEmailPage() {
             </h2>
 
             <p className="text-base text-dark-black/80 leading-relaxed">
-              You are about to embark on an incredible journey of skill development, hands-on masterclasses, and real-world project experience. At Noviq Academy, we bring together expert mentors and curious minds to build the future of technology and engineering.
+              You are about to embark on an incredible journey of skill development, hands-on masterclasses, and real-world project experience. At NoviQ Academy, we bring together expert mentors and curious minds to build the future of technology and engineering.
             </p>
 
             <div className="space-y-4 pt-2">
@@ -117,7 +117,7 @@ export default function ConfirmEmailPage() {
 
       {/* Simple Footer */}
       <footer className="py-4 text-center text-xs text-dark-black/50 border-t border-dark-black/5">
-        &copy; {new Date().getFullYear()} Noviq Academy. All rights reserved.
+        &copy; {new Date().getFullYear()} NovQq Academy. All rights reserved.
       </footer>
     </div>
   );

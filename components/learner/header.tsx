@@ -26,7 +26,7 @@ export default function LearnerHeader() {
                 />
               </div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-dark-black whitespace-nowrap group-hover:text-primary-orange transition-colors">
-                Noviq Academy
+                NoviQ Academy
               </h1>
             </Link>
 

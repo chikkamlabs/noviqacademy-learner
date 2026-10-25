@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getAllTopics } from '@/lib/coursesStore';
 import { Tag } from 'lucide-react';
+import { FaInstagram } from 'react-icons/fa';
 
 export default function Footer() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function Footer() {
     'Mentor Network',
     'Learner Support',
     'Admissions & FAQs',
-    'Why Noviq Academy',
+    'Why NoviQQ Academy',
     'Privacy Policy',
     'Terms of Service',
     'Cookie Policy',
@@ -103,18 +104,36 @@ export default function Footer() {
                 />
               </div>
               <span className="text-xl font-bold tracking-tight text-pure-white">
-                Noviq Academy
+                NoviQ Academy
               </span>
             </Link>
 
+            
+            
+
             <p className="text-sm text-soft-cream max-w-sm leading-relaxed">
-              Code Learn Build. Learn programming with industry level Experience. Expert mentors guiding you toward real-world tech careers.
+              Explore Apply Achieve. Learn programming with industry level Experience. Expert mentors guiding you toward real-world tech careers.
             </p>
 
             <div className="pt-2 text-xs text-soft-orange">
               Empowering developers worldwide with practical skills, production labs, and live mentorship.
             </div>
+            
+<a
+  href="https://www.instagram.com/_noviq.academy_"
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="Follow Noviq Academy on Instagram"
+  className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg border border-primary-orange/50 bg-primary-orange/10 text-primary-orange font-semibold text-sm hover:bg-primary-orange hover:text-pure-white hover:shadow-md hover:shadow-primary-orange/20 transition-all duration-300"
+>
+  <span>Follow us on</span>
+  <FaInstagram className="w-5 h-5" />
+  <span>Instagram</span>
+</a>
+
           </div>
+
+          
 
           {/* Navigation Column */}
           <div className="lg:col-span-2 space-y-3">
@@ -258,7 +277,7 @@ export default function Footer() {
 
         {/* Bottom divider & copyright */}
         <div className="mt-12 pt-8 border-t border-soft-cream/20 flex flex-col sm:flex-row items-center justify-between text-xs text-soft-cream gap-4">
-          <p>© {currentYear} Noviq Academy. All rights reserved.</p>
+          <p>© {currentYear} NoviQ Academy. All rights reserved.</p>
           <p className="text-soft-orange">Practical Skills • Real Opportunities</p>
         </div>
       </div>

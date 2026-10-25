@@ -174,7 +174,7 @@ export default function Header({
                 />
               </div>
               <span className="text-lg sm:text-xl font-bold tracking-tight text-dark-black group-hover:text-primary-orange transition-colors">
-                Noviq Academy
+                NoviQ Academy
               </span>
             </Link>
 

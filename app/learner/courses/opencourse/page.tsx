@@ -458,13 +458,13 @@ function LearnerOpenCourseContent() {
               </div>
               <div className="space-y-1">
                 <h3 className="font-bold text-base text-dark-black">
-                  {course.mentor_name || 'Noviq Academy Senior mentor'}
+                  {course.mentor_name || 'NoviQ Academy Senior mentor'}
                 </h3>
                 <p className="text-xs font-semibold text-primary-orange">
                   Senior Industry Lead &amp; Mentor
                 </p>
                 <p className="text-xs text-dark-black/75 mt-1">
-                  Mentoring aspiring engineers and learners with production-grade curriculum, live guidance, and hands-on masterclasses at Noviq Academy.
+                  Mentoring aspiring engineers and learners with production-grade curriculum, live guidance, and hands-on masterclasses at NoviQ Academy.
                 </p>
               </div>
             </div>
@@ -626,13 +626,13 @@ function LearnerOpenCourseContent() {
                   </div>
                   <div className="space-y-1 max-w-lg">
                     <h3 className="font-bold text-lg text-dark-black">
-                      {course.mentor_name || 'Noviq academy senior mentor'}
+                      {course.mentor_name || 'NoviQ academy senior mentor'}
                     </h3>
                     <p className="text-xs font-semibold text-primary-orange">
                       Senior Industry Lead &amp; Mentor
                     </p>
                     <p className="text-xs sm:text-sm text-dark-black/75 mt-2">
-                      Mentoring aspiring engineers and learners with production-grade curriculum, live guidance, and hands-on masterclasses at Noviq Academy.
+                      Mentoring aspiring engineers and learners with production-grade curriculum, live guidance, and hands-on masterclasses at NoviQ Academy.
                     </p>
                   </div>
                 </div>

@@ -499,14 +499,14 @@ function OpenCourseContent() {
               </div>
               <div>
                 <h3 className="font-bold text-dark-black text-base">
-                  {course.mentor_name || 'Noviq Academy Mentor Team'}
+                  {course.mentor_name || 'NoviQ Academy Mentor Team'}
                 </h3>
                 <p className="text-xs font-semibold text-primary-orange">
                   Senior Industry Lead &amp; Mentor
                 </p>
                 <p className="text-xs text-dark-black/75 mt-1.5">
                   Mentoring aspiring engineers and learners with production-grade curriculum, live
-                  guidance, and hands-on masterclasses at Noviq Academy.
+                  guidance, and hands-on masterclasses at NoviQ Academy.
                 </p>
               </div>
             </div>
@@ -705,14 +705,14 @@ function OpenCourseContent() {
                   </div>
                   <div>
                     <h3 className="font-bold text-dark-black text-lg">
-                      {course.mentor_name || 'Noviq Academy Mentor Team'}
+                      {course.mentor_name || 'NoviQ Academy Mentor Team'}
                     </h3>
                     <p className="text-xs font-semibold text-primary-orange">
                       Senior Industry Lead &amp; Mentor
                     </p>
                     <p className="text-xs sm:text-sm text-dark-black/75 mt-2">
                       Mentoring aspiring engineers and learners with production-grade curriculum,
-                      live guidance, and hands-on masterclasses at Noviq Academy.
+                      live guidance, and hands-on masterclasses at NoviQ Academy.
                     </p>
                   </div>
                 </div>
@@ -737,7 +737,7 @@ function OpenCourseContent() {
           isLearnerLoggedIn ? 'pb-24 lg:pb-6' : ''
         }`}
       >
-        &copy; {new Date().getFullYear()} Noviq Academy. All rights reserved.
+        &copy; {new Date().getFullYear()} NoviQ Academy. All rights reserved.
       </footer>
 
       {/* Bottom Navigation for Learner */}
