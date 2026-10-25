@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signInLearner } from '@/lib/auth';
+import { signInLearner, sendPasswordResetEmail } from '@/lib/auth';
 import Header from '@/components/landingpage/header';
 import Footer from '@/components/landingpage/footer';
 
@@ -14,6 +14,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Forgot password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +53,29 @@ export default function LoginPage() {
 
     // Redirect to /learner/dashboard
     router.push('/learner/dashboard');
+  };
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotSuccess(null);
+
+    const trimmed = forgotEmail.trim();
+    if (!trimmed) {
+      setForgotError('Please enter your registered email.');
+      return;
+    }
+
+    setForgotLoading(true);
+    const res = await sendPasswordResetEmail(trimmed);
+    setForgotLoading(false);
+
+    if (!res.success) {
+      setForgotError(res.error || 'Failed to send reset email. Please try again.');
+      return;
+    }
+
+    setForgotSuccess('Password reset link sent! Please check your email inbox.');
   };
 
   return (
@@ -118,6 +148,21 @@ export default function LoginPage() {
                 />
               </div>
 
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotEmail(email);
+                    setForgotError(null);
+                    setForgotSuccess(null);
+                    setShowForgotModal(true);
+                  }}
+                  className="text-xs sm:text-sm font-medium text-primary-orange hover:text-dark-black hover:underline cursor-pointer"
+                >
+                  forgot password! click here.
+                </button>
+              </div>
+
               <div className="pt-2">
                 <button
                   type="submit"
@@ -131,6 +176,80 @@ export default function LoginPage() {
           </div>
         </div>
       </main>
+
+      {/* Forgot Password Overscreen Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-dark-black/50 p-4">
+          <div className="bg-pure-white rounded-lg shadow-xl border border-dark-black/10 max-w-sm w-full p-6 relative animate-in fade-in zoom-in-95 duration-150">
+            <button
+              type="button"
+              onClick={() => setShowForgotModal(false)}
+              className="absolute top-4 right-4 text-dark-black/60 hover:text-dark-black text-xl leading-none cursor-pointer"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+
+            <h3 className="text-lg font-bold text-dark-black mb-1">
+              Forgot Password
+            </h3>
+            <p className="text-xs sm:text-sm text-dark-black/70 mb-4">
+              Enter your registered email to receive a password reset link.
+            </p>
+
+            <form onSubmit={handleForgotSubmit} noValidate className="space-y-4">
+              <div>
+                <label
+                  htmlFor="forgot-email"
+                  className="block text-sm font-medium text-dark-black"
+                >
+                  Registered Email <span className="text-red-500 font-bold">*</span>
+                </label>
+                <input
+                  id="forgot-email"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => {
+                    setForgotEmail(e.target.value);
+                    if (forgotError) setForgotError(null);
+                  }}
+                  placeholder="Enter your registered email"
+                  className="mt-1 block w-full px-3 py-2 border border-dark-black/20 rounded-md shadow-xs focus:outline-hidden focus:border-primary-orange focus:ring-1 focus:ring-primary-orange text-dark-black text-sm"
+                />
+              </div>
+
+              {forgotError && (
+                <div className="p-2.5 rounded-md bg-red-50 border border-red-200 text-xs sm:text-sm text-red-600 font-medium">
+                  {forgotError}
+                </div>
+              )}
+
+              {forgotSuccess && (
+                <div className="p-2.5 rounded-md bg-green-50 border border-green-200 text-xs sm:text-sm text-green-700 font-medium">
+                  {forgotSuccess}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="flex-1 py-2 px-3 border border-dark-black/20 rounded-md text-sm font-medium text-dark-black hover:bg-black/5 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="flex-1 py-2 px-3 bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {forgotLoading ? 'Sending...' : 'Send'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Footer at Bottom */}
       <Footer />

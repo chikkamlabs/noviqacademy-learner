@@ -146,3 +146,55 @@ export function onAuthStateChange(
 ) {
   return supabase.auth.onAuthStateChange(callback);
 }
+
+/**
+ * Send password reset email
+ */
+export async function sendPasswordResetEmail(email: string, redirectTo?: string) {
+  try {
+    const targetRedirect =
+      redirectTo ||
+      (typeof window !== 'undefined'
+        ? `${window.location.origin}/passwordreset`
+        : undefined);
+
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: targetRedirect,
+    });
+
+    if (error) {
+      return { success: false, error: error.message, data: null };
+    }
+
+    return { success: true, error: null, data };
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'An unexpected error occurred while sending reset email';
+    return { success: false, error: message, data: null };
+  }
+}
+
+/**
+ * Update current user password
+ */
+export async function updateLearnerPassword(password: string) {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      password,
+    });
+
+    if (error) {
+      return { success: false, error: error.message, data: null };
+    }
+
+    return { success: true, error: null, data };
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'An unexpected error occurred while updating password';
+    return { success: false, error: message, data: null };
+  }
+}
