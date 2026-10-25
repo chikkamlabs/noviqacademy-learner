@@ -67,7 +67,7 @@ export async function getLearnerProfile(): Promise<LearnerProfileData | null> {
       mobile: userData?.mobile || user.user_metadata?.mobile || '',
       role: userData?.role || 'learner',
       region: region === 'uk' ? 'uk' : 'india',
-      referral_code: profileData?.referral_code || null,
+      referral_code: profileData?.referral_code || user.user_metadata?.referral_code || null,
     };
   } catch (err) {
     console.warn('Error fetching learner profile:', err);
@@ -126,15 +126,32 @@ export async function updateLearnerProfile(params: {
 
     // 2. Update public.learner_profile
     if (params.region !== undefined) {
-      const { error: profileErr } = await supabase
+      const { data: existingProfile } = await supabase
         .from('learner_profile')
-        .upsert({
-          id: user.id,
-          region: params.region,
-        });
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (profileErr) {
-        console.warn('Note: Could not update learner_profile table:', profileErr.message);
+      if (existingProfile) {
+        const { error: profileErr } = await supabase
+          .from('learner_profile')
+          .update({ region: params.region })
+          .eq('id', user.id);
+
+        if (profileErr) {
+          console.warn('Note: Could not update learner_profile table:', profileErr.message);
+        }
+      } else {
+        const { error: profileErr } = await supabase
+          .from('learner_profile')
+          .insert({
+            id: user.id,
+            region: params.region,
+          });
+
+        if (profileErr) {
+          console.warn('Note: Could not insert into learner_profile table:', profileErr.message);
+        }
       }
     }
 

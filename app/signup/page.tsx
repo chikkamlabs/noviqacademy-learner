@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signUpLearner } from '@/lib/auth';
 import Header from '@/components/landingpage/header';
@@ -25,6 +24,7 @@ export default function SignUpPage() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    setError(null);
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -48,15 +48,43 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Frontend validation: if misses anything raise error
+    if (!formData.name.trim()) {
+      setError('Name is required.');
+      return;
+    }
+    if (!formData.mobile.trim()) {
+      setError('Mobile number is required.');
+      return;
+    }
+    const cleanedMobile = formData.mobile.replace(/[^0-9]/g, '');
+    if (cleanedMobile.length < 10) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (!formData.email.trim()) {
+      setError('Email address is required.');
+      return;
+    }
+    if (!formData.password) {
+      setError('Password is required.');
+      return;
+    }
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
     setLoading(true);
 
     const randomReferralCode = generateReferralCode();
 
     const result = await signUpLearner({
-      name: formData.name,
-      mobile: formData.mobile,
+      name: formData.name.trim(),
+      mobile: formData.mobile.trim(),
       region: formData.region,
-      email: formData.email,
+      email: formData.email.trim(),
       password: formData.password,
       referral_code: randomReferralCode,
     });
@@ -79,25 +107,11 @@ export default function SignUpPage() {
 
       <main className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <div className="relative w-12 h-12 overflow-hidden rounded-full border border-soft-cream shadow-xs">
-              <Image
-                src="/noviqacademy_logo.png"
-                alt="Noviq Academy Logo"
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-dark-black">
-              Noviq Academy
-            </span>
-          </Link>
-          <h2 className="mt-6 text-2xl sm:text-3xl font-extrabold text-dark-black">
-            Create Your Account
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-dark-black">
+            Create your account
           </h2>
           <p className="mt-2 text-sm text-dark-black/70">
-            Already a User?{' '}
+            Already a user?{' '}
             <Link
               href="/login"
               className="font-semibold text-primary-orange hover:text-dark-black transition-colors underline"
@@ -110,24 +124,23 @@ export default function SignUpPage() {
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
           <div className="bg-pure-white py-8 px-6 shadow-sm rounded-lg sm:px-10 border border-dark-black/10">
             {error && (
-              <div className="mb-6 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-600">
+              <div className="mb-6 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-600 font-medium">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
               <div>
                 <label
                   htmlFor="name"
                   className="block text-sm font-medium text-dark-black"
                 >
-                  Name
+                  Name <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
                   id="name"
                   name="name"
                   type="text"
-                  required
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Enter your full name"
@@ -140,13 +153,12 @@ export default function SignUpPage() {
                   htmlFor="mobile"
                   className="block text-sm font-medium text-dark-black"
                 >
-                  Mobile
+                  Mobile <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
                   id="mobile"
                   name="mobile"
                   type="tel"
-                  required
                   value={formData.mobile}
                   onChange={handleChange}
                   placeholder="Enter your phone number"
@@ -159,7 +171,7 @@ export default function SignUpPage() {
                   htmlFor="region"
                   className="block text-sm font-medium text-dark-black"
                 >
-                  Region
+                  Region <span className="text-red-500 font-bold">*</span>
                 </label>
                 <select
                   id="region"
@@ -178,13 +190,12 @@ export default function SignUpPage() {
                   htmlFor="email"
                   className="block text-sm font-medium text-dark-black"
                 >
-                  Email
+                  Email <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
                   id="email"
                   name="email"
                   type="email"
-                  required
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="name@example.com"
@@ -197,14 +208,12 @@ export default function SignUpPage() {
                   htmlFor="password"
                   className="block text-sm font-medium text-dark-black"
                 >
-                  Password
+                  Password <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
                   id="password"
                   name="password"
                   type="password"
-                  required
-                  minLength={6}
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Create a strong password"

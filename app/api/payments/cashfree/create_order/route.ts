@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
       currency = 'INR',
       customer_details,
       coupon_code,
+      referral_by,
     } = body;
 
     // Strict validation - no dummy fallback
@@ -95,6 +96,7 @@ export async function POST(req: NextRequest) {
           course_id: course_id,
           batch_id: batch_id,
           learner_id: customer_id.trim(),
+          referral_by: referral_by || null,
           amount: amount,
           currency: currency,
           status: 'pending',

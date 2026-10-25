@@ -13,6 +13,8 @@ import {
   Mail,
   Phone,
   Calendar,
+  Copy,
+  Check,
 } from 'lucide-react';
 import LearnerHeader from '@/components/learner/header';
 import LearnerBottomNavigation from '@/components/learner/bottomnavigation';
@@ -32,6 +34,17 @@ export default function LearnerProfileDashboardPage() {
   const [registrations, setRegistrations] = useState<RegistrationBasicItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [referralCopied, setReferralCopied] = useState(false);
+
+  const handleCopyReferral = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setReferralCopied(true);
+      setTimeout(() => setReferralCopied(false), 2000);
+    } catch (e) {
+      console.error('Failed to copy referral code', e);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -80,6 +93,35 @@ export default function LearnerProfileDashboardPage() {
                       {profile.mobile}
                     </span>
                   )}
+                </div>
+
+                {/* Referral Code (allow to copy) */}
+                <div className="flex flex-wrap items-center gap-2 mt-2.5 text-xs sm:text-sm text-dark-black">
+                  <span className="font-medium">Your Referral code :</span>
+                  <span className="font-mono font-bold text-primary-orange bg-soft-cream px-2 py-0.5 rounded border border-soft-orange/50">
+                    {profile?.referral_code || '—'}
+                  </span>
+                  {profile?.referral_code && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyReferral(profile.referral_code!)}
+                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-primary-orange text-pure-white rounded hover:bg-soft-orange hover:text-dark-black transition-colors"
+                      title="Copy referral code"
+                    >
+                      {referralCopied ? (
+                        <>
+                          <Check className="w-3 h-3" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  <span className="text-dark-black/70">and get benefits</span>
                 </div>
               </div>
             </div>
