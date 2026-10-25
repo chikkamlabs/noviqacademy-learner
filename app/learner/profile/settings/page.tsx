@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import LearnerHeader from '@/components/learner/header';
 import LearnerBottomNavigation from '@/components/learner/bottomnavigation';
 import { getLearnerProfile, updateLearnerProfile } from '@/lib/profilesStore';
@@ -15,6 +15,8 @@ export default function LearnerProfileSettingsPage() {
     region: 'india' as 'india' | 'uk',
     password: '',
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -236,16 +238,30 @@ export default function LearnerProfileSettingsPage() {
                 >
                   New Password (Optional)
                 </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  minLength={6}
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Leave blank to keep current password"
-                  className="mt-1.5 block w-full px-3.5 py-2.5 border border-dark-black/20 rounded-lg shadow-xs focus:outline-hidden focus:border-primary-orange focus:ring-1 focus:ring-primary-orange text-dark-black"
-                />
+                <div className="relative mt-1.5">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    minLength={6}
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Leave blank to keep current password"
+                    className="block w-full px-3.5 py-2.5 pr-10 border border-dark-black/20 rounded-lg shadow-xs focus:outline-hidden focus:border-primary-orange focus:ring-1 focus:ring-primary-orange text-dark-black"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-dark-black/50 hover:text-dark-black transition-colors cursor-pointer"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
                 <p className="text-xs text-dark-black/60 mt-1">
                   Enter 6+ characters if you want to reset your password.
                 </p>
