@@ -313,6 +313,7 @@ export async function createCourseRegistration(params: {
   batch_id: string;
   amount: number;
   currency: 'INR' | 'GBP';
+  referral_by?: string | null;
 }): Promise<{
   success: boolean;
   registration_id?: string;
@@ -336,6 +337,7 @@ export async function createCourseRegistration(params: {
       course_id: params.course_id,
       batch_id: params.batch_id,
       learner_id: user.id,
+      referral_by: params.referral_by || null,
       amount: params.amount,
       currency: params.currency,
       status: 'active',
@@ -729,6 +731,43 @@ export async function validateCouponCode(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error validating coupon';
     return { valid: false, discount: 0, error: msg };
+  }
+}
+
+/**
+ * Validate a referral code by checking learner_profile.referral_code
+ * Returns the matching learner_profile.id and user's full name.
+ */
+export async function validateReferralCode(
+  referralCode: string,
+  currentLearnerId?: string
+): Promise<{
+  valid: boolean;
+  learnerId?: string;
+  name?: string;
+  error?: string;
+}> {
+  try {
+    const cleanCode = referralCode.trim().toUpperCase();
+    if (!cleanCode) {
+      return { valid: false, error: 'Please enter a referral code.' };
+    }
+
+    // Call server-side API route which uses supabaseAdmin to bypass RLS restrictions
+    const res = await fetch('/api/referral/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        referral_code: cleanCode,
+        current_user_id: currentLearnerId,
+      }),
+    });
+
+    const data = await res.json();
+    return data;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to verify referral code';
+    return { valid: false, error: msg };
   }
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,29 @@ export default function Header({
   const [couponsHeight, setCouponsHeight] = useState(0);
   const [contactDropdownOpen, setContactDropdownOpen] = useState(false);
   const router = useRouter();
+  const contactDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleContactMouseEnter = () => {
+    if (contactDropdownTimeoutRef.current) {
+      clearTimeout(contactDropdownTimeoutRef.current);
+      contactDropdownTimeoutRef.current = null;
+    }
+    setContactDropdownOpen(true);
+  };
+
+  const handleContactMouseLeave = () => {
+    contactDropdownTimeoutRef.current = setTimeout(() => {
+      setContactDropdownOpen(false);
+    }, 250);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (contactDropdownTimeoutRef.current) {
+        clearTimeout(contactDropdownTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
   let observed: HTMLElement | null = null;
@@ -92,6 +115,10 @@ export default function Header({
 
   const handleContactClick = (type: 'learner' | 'mentor', e: React.MouseEvent) => {
     e.preventDefault();
+    if (contactDropdownTimeoutRef.current) {
+      clearTimeout(contactDropdownTimeoutRef.current);
+      contactDropdownTimeoutRef.current = null;
+    }
     setContactDropdownOpen(false);
     setMobileMenuOpen(false);
 
@@ -167,8 +194,8 @@ export default function Header({
               {/* Contact Us (Learner and Mentor) Dropdown */}
               <div
                 className="relative"
-                onMouseEnter={() => setContactDropdownOpen(true)}
-                onMouseLeave={() => setContactDropdownOpen(false)}
+                onMouseEnter={handleContactMouseEnter}
+                onMouseLeave={handleContactMouseLeave}
               >
                 <button
                   type="button"
@@ -184,42 +211,48 @@ export default function Header({
                 </button>
 
                 {contactDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1.5 w-64 bg-pure-white rounded-xl border border-soft-cream shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <button
-                      type="button"
-                      onClick={(e) => handleContactClick('learner', e)}
-                      className="w-full text-left p-2.5 rounded-lg hover:bg-soft-cream/80 transition-colors flex items-start gap-3 group cursor-pointer"
-                    >
-                      <div className="p-1.5 rounded-md bg-soft-orange/30 text-primary-orange group-hover:bg-primary-orange group-hover:text-pure-white transition-colors shrink-0 mt-0.5">
-                        <GraduationCap className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs sm:text-sm font-bold text-dark-black group-hover:text-primary-orange transition-colors">
-                          Contact as Learner
+                  <div
+                    onMouseEnter={handleContactMouseEnter}
+                    onMouseLeave={handleContactMouseLeave}
+                    className="absolute top-full left-0 pt-2 w-64 z-50"
+                  >
+                    <div className="bg-pure-white rounded-xl border border-soft-cream shadow-xl p-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <button
+                        type="button"
+                        onClick={(e) => handleContactClick('learner', e)}
+                        className="w-full text-left p-2.5 rounded-lg hover:bg-soft-cream/80 transition-colors flex items-start gap-3 group cursor-pointer"
+                      >
+                        <div className="p-1.5 rounded-md bg-soft-orange/30 text-primary-orange group-hover:bg-primary-orange group-hover:text-pure-white transition-colors shrink-0 mt-0.5">
+                          <GraduationCap className="w-4 h-4" />
                         </div>
-                        <div className="text-[11px] text-dark-black/70 leading-snug">
-                          Course inquiries &amp; curriculum advice
+                        <div>
+                          <div className="text-xs sm:text-sm font-bold text-dark-black group-hover:text-primary-orange transition-colors">
+                            Contact as Learner
+                          </div>
+                          <div className="text-[11px] text-dark-black/70 leading-snug">
+                            Course inquiries &amp; curriculum advice
+                          </div>
                         </div>
-                      </div>
-                    </button>
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={(e) => handleContactClick('mentor', e)}
-                      className="w-full text-left p-2.5 rounded-lg hover:bg-soft-cream/80 transition-colors flex items-start gap-3 group mt-1 cursor-pointer"
-                    >
-                      <div className="p-1.5 rounded-md bg-soft-orange/30 text-primary-orange group-hover:bg-primary-orange group-hover:text-pure-white transition-colors shrink-0 mt-0.5">
-                        <UserCheck className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs sm:text-sm font-bold text-dark-black group-hover:text-primary-orange transition-colors">
-                          Become a Mentor
+                      <button
+                        type="button"
+                        onClick={(e) => handleContactClick('mentor', e)}
+                        className="w-full text-left p-2.5 rounded-lg hover:bg-soft-cream/80 transition-colors flex items-start gap-3 group mt-1 cursor-pointer"
+                      >
+                        <div className="p-1.5 rounded-md bg-soft-orange/30 text-primary-orange group-hover:bg-primary-orange group-hover:text-pure-white transition-colors shrink-0 mt-0.5">
+                          <UserCheck className="w-4 h-4" />
                         </div>
-                        <div className="text-[11px] text-dark-black/70 leading-snug">
-                          Join senior mentor cohort &amp; instruct
+                        <div>
+                          <div className="text-xs sm:text-sm font-bold text-dark-black group-hover:text-primary-orange transition-colors">
+                            Become a Mentor
+                          </div>
+                          <div className="text-[11px] text-dark-black/70 leading-snug">
+                            Join senior mentor cohort &amp; instruct
+                          </div>
                         </div>
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

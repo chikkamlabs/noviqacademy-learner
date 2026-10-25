@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signInLearner } from '@/lib/auth';
 import Header from '@/components/landingpage/header';
@@ -19,9 +18,25 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Frontend validation: if misses anything raise error
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail && !password) {
+      setError('Please fill in both email and password.');
+      return;
+    }
+    if (!trimmedEmail) {
+      setError('Email address is required.');
+      return;
+    }
+    if (!password) {
+      setError('Password is required.');
+      return;
+    }
+
     setLoading(true);
 
-    const result = await signInLearner({ email, password });
+    const result = await signInLearner({ email: trimmedEmail, password });
     setLoading(false);
 
     if (!result.success) {
@@ -40,21 +55,7 @@ export default function LoginPage() {
 
       <main className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <div className="relative w-12 h-12 overflow-hidden rounded-full border border-soft-cream shadow-xs">
-              <Image
-                src="/noviqacademy_logo.png"
-                alt="Noviq Academy Logo"
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-dark-black">
-              Noviq Academy
-            </span>
-          </Link>
-          <h2 className="mt-6 text-2xl sm:text-3xl font-extrabold text-dark-black">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-dark-black">
             Log in to your account
           </h2>
           <p className="mt-2 text-sm text-dark-black/70">
@@ -71,25 +72,27 @@ export default function LoginPage() {
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
           <div className="bg-pure-white py-8 px-6 shadow-sm rounded-lg sm:px-10 border border-dark-black/10">
             {error && (
-              <div className="mb-6 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-600">
+              <div className="mb-6 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-600 font-medium">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
               <div>
                 <label
                   htmlFor="email"
                   className="block text-sm font-medium text-dark-black"
                 >
-                  Email
+                  Email <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
                   id="email"
                   type="email"
-                  required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(null);
+                  }}
                   placeholder="name@example.com"
                   className="mt-1 block w-full px-3 py-2 border border-dark-black/20 rounded-md shadow-xs focus:outline-hidden focus:border-primary-orange focus:ring-1 focus:ring-primary-orange text-dark-black"
                 />
@@ -100,14 +103,16 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="block text-sm font-medium text-dark-black"
                 >
-                  Password
+                  Password <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
                   id="password"
                   type="password"
-                  required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
                   placeholder="Enter your password"
                   className="mt-1 block w-full px-3 py-2 border border-dark-black/20 rounded-md shadow-xs focus:outline-hidden focus:border-primary-orange focus:ring-1 focus:ring-primary-orange text-dark-black"
                 />

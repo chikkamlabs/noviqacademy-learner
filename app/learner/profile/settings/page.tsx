@@ -20,6 +20,37 @@ export default function LearnerProfileSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const [pendingRegion, setPendingRegion] = useState<'india' | 'uk' | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isTickConfirmed, setIsTickConfirmed] = useState(false);
+
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = e.target.value as 'india' | 'uk';
+    if (selected !== formData.region) {
+      setPendingRegion(selected);
+      setIsTickConfirmed(false);
+      setShowConfirmModal(true);
+    }
+  };
+
+  const handleConfirmRegion = () => {
+    if (isTickConfirmed && pendingRegion) {
+      setFormData((prev) => ({
+        ...prev,
+        region: pendingRegion,
+      }));
+      setShowConfirmModal(false);
+      setPendingRegion(null);
+      setIsTickConfirmed(false);
+    }
+  };
+
+  const handleCancelRegion = () => {
+    setShowConfirmModal(false);
+    setPendingRegion(null);
+    setIsTickConfirmed(false);
+  };
+
   useEffect(() => {
     async function fetchProfile() {
       setLoading(true);
@@ -186,7 +217,7 @@ export default function LearnerProfileSettingsPage() {
                   id="region"
                   name="region"
                   value={formData.region}
-                  onChange={handleChange}
+                  onChange={handleRegionChange}
                   className="mt-1.5 block w-full px-3.5 py-2.5 border border-dark-black/20 rounded-lg shadow-xs focus:outline-hidden focus:border-primary-orange focus:ring-1 focus:ring-primary-orange text-dark-black bg-pure-white"
                 >
                   <option value="india">India (Prices in INR ₹)</option>
@@ -240,6 +271,78 @@ export default function LearnerProfileSettingsPage() {
           )}
         </div>
       </main>
+
+      {/* Overscreen Confirmation Box for Changing Preference / Reference */}
+      {showConfirmModal && pendingRegion && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div className="bg-pure-white rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-soft-orange/40 relative">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-soft-orange/30 flex items-center justify-center text-primary-orange shrink-0">
+                <AlertCircle className="w-6 h-6 text-primary-orange" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-dark-black">
+                  Confirm Preference Change
+                </h3>
+                <p className="text-xs text-dark-black/60">
+                  Confirmation required to change region preference
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-dark-black/80 leading-relaxed mb-4">
+              Are you sure you want to change your region preference from{' '}
+              <span className="font-bold text-dark-black uppercase">
+                {formData.region === 'uk' ? 'United Kingdom (UK)' : 'India'}
+              </span>{' '}
+              to{' '}
+              <span className="font-bold text-primary-orange uppercase">
+                {pendingRegion === 'uk' ? 'United Kingdom (UK)' : 'India'}
+              </span>
+              ? Courses, pricing currency (
+              {pendingRegion === 'uk' ? 'GBP £' : 'INR ₹'}), and batch schedules will adjust accordingly.
+            </p>
+
+            {/* Checkbox ("If tick then change") */}
+            <label className="flex items-start gap-3 p-3.5 rounded-xl bg-soft-cream/70 border border-soft-orange/40 cursor-pointer select-none mb-6 hover:bg-soft-cream transition-colors">
+              <input
+                type="checkbox"
+                id="confirm-region-tick"
+                checked={isTickConfirmed}
+                onChange={(e) => setIsTickConfirmed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-dark-black/30 text-primary-orange focus:ring-primary-orange cursor-pointer"
+              />
+              <span className="text-xs sm:text-sm font-semibold text-dark-black">
+                I understand and agree to change my region preference to{' '}
+                {pendingRegion === 'uk' ? 'United Kingdom (UK)' : 'India'}.
+              </span>
+            </label>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCancelRegion}
+                className="px-4 py-2 text-sm font-semibold text-dark-black border border-dark-black/20 rounded-lg hover:bg-soft-cream transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRegion}
+                disabled={!isTickConfirmed}
+                className="px-5 py-2 text-sm font-bold bg-primary-orange text-pure-white rounded-lg hover:bg-soft-orange hover:text-dark-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <LearnerBottomNavigation />
     </div>

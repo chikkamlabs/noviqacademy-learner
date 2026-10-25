@@ -14,6 +14,7 @@ import {
   Check,
   ArrowRight,
   Tag,
+  Users,
 } from 'lucide-react';
 import LearnerHeader from '@/components/learner/header';
 import LearnerBottomNavigation from '@/components/learner/bottomnavigation';
@@ -23,6 +24,7 @@ import {
   fetchBatchesForCourse,
   createCourseRegistration,
   validateCouponCode,
+  validateReferralCode,
   formatReadableDate,
   BatchItem,
   CourseRegistrationData,
@@ -40,6 +42,12 @@ interface EligibleBatchInfo {
 interface AppliedCouponInfo {
   code: string;
   discount: number;
+}
+
+interface AppliedReferralInfo {
+  code: string;
+  learnerId: string;
+  name: string;
 }
 
 function CourseRegistrationContent() {
@@ -61,6 +69,12 @@ function CourseRegistrationContent() {
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  // Referral state
+  const [referralInput, setReferralInput] = useState('');
+  const [appliedReferral, setAppliedReferral] = useState<AppliedReferralInfo | null>(null);
+  const [referralError, setReferralError] = useState('');
+  const [validatingReferral, setValidatingReferral] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -193,6 +207,38 @@ function CourseRegistrationContent() {
     setCouponSuccess('');
   };
 
+  // Handle Referral Code Apply
+  const handleApplyReferral = async () => {
+    if (!referralInput.trim()) {
+      setReferralError('Please enter a referral code.');
+      return;
+    }
+
+    setValidatingReferral(true);
+    setReferralError('');
+
+    const res = await validateReferralCode(referralInput, learner?.id);
+
+    if (res.valid && res.learnerId && res.name) {
+      setAppliedReferral({
+        code: referralInput.trim().toUpperCase(),
+        learnerId: res.learnerId,
+        name: res.name,
+      });
+    } else {
+      setReferralError(res.error || 'Invalid referral code.');
+      setAppliedReferral(null);
+    }
+
+    setValidatingReferral(false);
+  };
+
+  const handleRemoveReferral = () => {
+    setAppliedReferral(null);
+    setReferralInput('');
+    setReferralError('');
+  };
+
   // Handle learner clicking "Continue with this course"
   const handleContinueWithCourse = () => {
     if (eligibleBatchInfo?.batch) {
@@ -246,6 +292,7 @@ function CourseRegistrationContent() {
           amount: totalPayable,
           currency,
           coupon_code: appliedCoupon?.code,
+          referral_by: appliedReferral?.learnerId || null,
           customer_details: {
             customer_id: learner.id,
             customer_name: learner.name || 'Learner',
@@ -641,6 +688,61 @@ function CourseRegistrationContent() {
                     <Check className="w-3.5 h-3.5" />
                     <span>{couponSuccess}</span>
                   </p>
+                )}
+              </div>
+
+              {/* Referral Code Section */}
+              <div className="p-4 rounded-xl bg-soft-cream/40 border border-soft-cream space-y-2.5">
+                <label
+                  htmlFor="referral-code-input"
+                  className="block text-xs font-bold text-dark-black flex items-center gap-1.5"
+                >
+                  <Users className="w-3.5 h-3.5 text-primary-orange" />
+                  <span>Have a Referral Code?</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="referral-code-input"
+                    type="text"
+                    value={referralInput}
+                    onChange={(e) => {
+                      setReferralInput(e.target.value.toUpperCase());
+                      setReferralError('');
+                    }}
+                    placeholder="Enter referral code"
+                    disabled={!!appliedReferral || validatingReferral}
+                    className="flex-1 px-3 py-2 text-xs sm:text-sm bg-pure-white rounded-xl border border-dark-black/20 focus:outline-hidden focus:border-primary-orange font-mono uppercase text-dark-black"
+                  />
+                  {appliedReferral ? (
+                    <button
+                      type="button"
+                      onClick={handleRemoveReferral}
+                      className="px-3.5 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-red-200"
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleApplyReferral}
+                      disabled={validatingReferral || !referralInput.trim()}
+                      className="px-4 py-2 bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      {validatingReferral ? 'Verifying...' : 'Apply'}
+                    </button>
+                  )}
+                </div>
+
+                {referralError && (
+                  <p className="text-xs text-red-600 font-semibold">{referralError}</p>
+                )}
+                {appliedReferral && (
+                  <div className="p-2.5 rounded-lg bg-green-50 border border-green-200 text-xs text-green-800 font-medium flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                    <span>
+                      Referral name: <strong className="font-bold text-dark-black">{appliedReferral.name}</strong>
+                    </span>
+                  </div>
                 )}
               </div>
 
