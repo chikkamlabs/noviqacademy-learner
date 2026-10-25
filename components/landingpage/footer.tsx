@@ -3,32 +3,57 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getAllTopics } from '@/lib/coursesStore';
 import { Tag } from 'lucide-react';
 
 export default function Footer() {
+  const router = useRouter();
   const currentYear = new Date().getFullYear();
 
-  // Updated navigation links with home, explore courses, why choose us, learner contact, and mentor contact
-  const navLinks = [
-    { label: 'Home', href: '/' },
-    { label: 'Explore courses', href: '/publicexplorecourses' },
-    { label: 'Why choose us', href: '/#why-us' },
-    { label: 'Contact us (Learner)', href: '/#contact-us?type=learner' },
-    { label: 'Become a Mentor', href: '/#contact-us?type=mentor' },
-  ];
+  const handleWhyUsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (typeof window !== 'undefined') {
+      const isHome =
+        window.location.pathname === '/' || window.location.pathname === '/landingpage';
+      if (isHome) {
+        window.history.pushState(null, '', '/#why-us');
+        const el = document.getElementById('why-us');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        router.push('/#why-us');
+      }
+    }
+  };
 
-  const resourceLinks = [
-    { label: 'Mentor Network', href: '/#contact-us?type=mentor' },
-    { label: 'Learner Support', href: '/#contact-us?type=learner' },
-    { label: 'Admissions & FAQs', href: '/#contact-us' },
-    { label: 'Why Noviq Academy', href: '/#why-us' },
-  ];
+  const handleContactClick = (type: 'learner' | 'mentor', e: React.MouseEvent) => {
+    e.preventDefault();
+    if (typeof window !== 'undefined') {
+      const isHome =
+        window.location.pathname === '/' || window.location.pathname === '/landingpage';
+      if (isHome) {
+        window.history.pushState(null, '', `/?type=${type}#contact-us`);
+        window.dispatchEvent(new CustomEvent('noviq:set-contact-type', { detail: type }));
+        const el = document.getElementById('contact-us');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        router.push(`/?type=${type}#contact-us`);
+      }
+    }
+  };
 
-  const legalLinks = [
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Cookie Policy', href: '#' },
+  const resourceItems = [
+    'Mentor Network',
+    'Learner Support',
+    'Admissions & FAQs',
+    'Why Noviq Academy',
+    'Privacy Policy',
+    'Terms of Service',
+    'Cookie Policy',
   ];
 
   // Topics state fetched from database topics table with fallback
@@ -97,16 +122,49 @@ export default function Footer() {
               Navigation
             </h3>
             <ul className="space-y-2 text-sm">
-              {navLinks.map((item) => (
-                <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="text-soft-cream hover:text-primary-orange transition-colors"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link
+                  href="/"
+                  className="text-soft-cream hover:text-primary-orange transition-colors"
+                >
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/publicexplorecourses"
+                  className="text-soft-cream hover:text-primary-orange transition-colors"
+                >
+                  Explore courses
+                </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={handleWhyUsClick}
+                  className="text-soft-cream hover:text-primary-orange transition-colors cursor-pointer text-left"
+                >
+                  Why choose us
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={(e) => handleContactClick('learner', e)}
+                  className="text-soft-cream hover:text-primary-orange transition-colors cursor-pointer text-left"
+                >
+                  Contact us
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={(e) => handleContactClick('mentor', e)}
+                  className="text-soft-cream hover:text-primary-orange transition-colors cursor-pointer text-left"
+                >
+                  Become a Mentor
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -176,30 +234,21 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Resources & Legal Column */}
+          {/* Resources & Support Column */}
           <div className="lg:col-span-2 space-y-3">
             <h3 className="text-sm font-semibold tracking-wider text-primary-orange uppercase">
               Resources &amp; Support
             </h3>
             <ul className="space-y-2 text-sm">
-              {resourceLinks.map((item) => (
-                <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="text-soft-cream hover:text-primary-orange transition-colors"
+              {resourceItems.map((item) => (
+                <li key={item}>
+                  <button
+                    type="button"
+                    onClick={(e) => e.preventDefault()}
+                    className="text-soft-cream/80 hover:text-soft-cream transition-colors text-left cursor-default select-none"
                   >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-              {legalLinks.map((item) => (
-                <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="text-soft-cream hover:text-primary-orange transition-colors"
-                  >
-                    {item.label}
-                  </Link>
+                    {item}
+                  </button>
                 </li>
               ))}
             </ul>
