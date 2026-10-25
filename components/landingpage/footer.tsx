@@ -51,7 +51,6 @@ export default function Footer() {
     'Mentor Network',
     'Learner Support',
     'Admissions & FAQs',
-    'Why NoviQQ Academy',
     'Privacy Policy',
     'Terms of Service',
     'Cookie Policy',
