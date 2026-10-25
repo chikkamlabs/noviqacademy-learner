@@ -111,7 +111,7 @@ function CodeEditorAnimation() {
 }
 
 function ContinuousCodeLearnBuild() {
-  const fullText = 'CODE LEARN BUILD';
+  const fullText = 'EXPLORE APPLY ACHIEVE';
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -172,7 +172,7 @@ function HeroTextContent({
 }) {
   return (
     <div className="flex flex-col items-start space-y-3 sm:space-y-3.5 pt-0">
-      {/* Tagline: CODE LEARN BUILD Continuously write from right to left and start writing again and again */}
+      {/* Tagline: EXPLORE APPLY ACHIEVE Continuously write from right to left and start writing again and again */}
       <ContinuousCodeLearnBuild />
 
       {/* Main Heading with decreased vertical spacing */}
@@ -241,10 +241,10 @@ export default function HeroSection() {
 
   // Marquee text repeated for infinite smooth loop attached at hero bottom
   const tickerItems = [
-    'CODE LEARN BUILD',
-    'CODE LEARN BUILD',
-    'CODE LEARN BUILD',
-    'CODE LEARN BUILD',
+    'EXPLORE APPLY ACHIEVE',
+    'EXPLORE APPLY ACHIEVE',
+    'EXPLORE APPLY ACHIEVE',
+    'EXPLORE APPLY ACHIEVE',
   ];
 
   return (
@@ -373,7 +373,7 @@ export default function HeroSection() {
 
       </div>
 
-      {/* Animated Big Font Horizontal Scrolling Letters "Code Learn Build" attached to hero bottom */}
+      {/* Animated Big Font Horizontal Scrolling Letters "EXPLORE APPLY ACHIEVE" attached to hero bottom */}
       <div className="mt-10 sm:mt-14 pt-6 border-t border-soft-cream overflow-hidden whitespace-nowrap w-full select-none">
         <div className="flex w-max animate-marquee gap-8">
           {tickerItems.concat(tickerItems).map((text, idx) => (
