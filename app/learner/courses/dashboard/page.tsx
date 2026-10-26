@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   BookOpen,
   Calendar,
@@ -21,6 +22,7 @@ import {
 } from '@/lib/learnercourses';
 
 export default function LearnerCoursesDashboardPage() {
+  const router = useRouter();
   const [courses, setCourses] = useState<LearnerBoughtCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBatchForBoard, setSelectedBatchForBoard] =
@@ -91,11 +93,13 @@ export default function LearnerCoursesDashboardPage() {
           <div className="space-y-4">
             {courses.map((course, idx) => {
               const formattedDate = formatBatchDate(course.start_date);
+              const targetBatchId = course.batch_id || course.batch_code || '';
 
               return (
                 <div
                   key={`${course.registration_id}-${idx}`}
-                  className="bg-pure-white rounded-2xl border-2 border-soft-cream hover:border-primary-orange shadow-xs hover:shadow-sm transition-all p-5 sm:p-6 space-y-4"
+                  onClick={() => router.push(`/learner/study/dashboard?id=${encodeURIComponent(targetBatchId)}`)}
+                  className="bg-pure-white rounded-2xl border-2 border-soft-cream hover:border-primary-orange shadow-xs hover:shadow-md transition-all p-5 sm:p-6 space-y-4 cursor-pointer group"
                 >
                   {/* ============================================================== */}
                   {/* 1st ROW: Course Title & Course topics (from course_topics only) */}
@@ -103,7 +107,7 @@ export default function LearnerCoursesDashboardPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-soft-cream/80">
                     {/* Course Title */}
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-lg sm:text-xl font-bold text-dark-black leading-snug">
+                      <h2 className="text-lg sm:text-xl font-bold text-dark-black group-hover:text-primary-orange transition-colors leading-snug">
                         {course.course_title}
                       </h2>
                     </div>
@@ -164,7 +168,10 @@ export default function LearnerCoursesDashboardPage() {
                     <div className="shrink-0 flex items-center">
                       <button
                         type="button"
-                        onClick={() => setSelectedBatchForBoard(course)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedBatchForBoard(course);
+                        }}
                         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-orange hover:bg-soft-orange text-pure-white hover:text-dark-black text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer"
                       >
                         <Radio className="w-4 h-4 animate-pulse" />
