@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -15,6 +15,8 @@ import {
   ArrowRight,
   Tag,
   Users,
+  Clock,
+  Languages,
 } from 'lucide-react';
 import LearnerHeader from '@/components/learner/header';
 import LearnerBottomNavigation from '@/components/learner/bottomnavigation';
@@ -50,6 +52,24 @@ interface AppliedReferralInfo {
   name: string;
 }
 
+function formatTimeString(timeStr?: string | null): string {
+  if (!timeStr) return '—';
+  try {
+    const parts = timeStr.split(':');
+    if (parts.length >= 2) {
+      let hours = parseInt(parts[0], 10);
+      const minutes = parts[1];
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      return `${hours}:${minutes} ${ampm}`;
+    }
+  } catch {
+    // fallback
+  }
+  return timeStr;
+}
+
 function CourseRegistrationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -58,10 +78,11 @@ function CourseRegistrationContent() {
 
   const [learner, setLearner] = useState<LearnerProfileData | null>(null);
   const [course, setCourse] = useState<CourseRegistrationData | null>(null);
-  const [, setOpenBatches] = useState<BatchItem[]>([]);
-  const [eligibleBatchInfo, setEligibleBatchInfo] = useState<EligibleBatchInfo | null>(null);
+  const [allBatches, setAllBatches] = useState<BatchItem[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState<'English' | 'Telugu'>('English');
   const [selectedBatch, setSelectedBatch] = useState<BatchItem | null>(null);
   const [hasConfirmedContinue, setHasConfirmedContinue] = useState(false);
+  const [currentTime, setCurrentTime] = useState<number>(0);
 
   // Coupon state
   const [couponInput, setCouponInput] = useState('');
@@ -111,45 +132,10 @@ function CourseRegistrationContent() {
         return;
       }
 
-      // 3. Fetch batches for this course
-      const allBatches = await fetchBatchesForCourse(courseData.id, learnerRegion);
-
-      // Rule 1: If batch "registrations" column is closed don't show that batch at all.
-      const onlyOpenBatches = allBatches.filter((b) => b.registrations === 'open');
-      setOpenBatches(onlyOpenBatches);
-
-      // Rule 2: If batch "registrations" is opened and start_date + grace period (days) > date.now
-      // Then ask the learner to Continue with this course.
-      const now = Date.now();
-      let foundEligible: EligibleBatchInfo | null = null;
-
-      for (const batch of onlyOpenBatches) {
-        const startDateMs = batch.start_date
-          ? new Date(batch.start_date).getTime()
-          : now;
-        const graceDays = Number(batch.grace_period) || 0;
-        const deadlineMs = startDateMs + graceDays * 24 * 60 * 60 * 1000;
-
-        if (deadlineMs > now) {
-          const diffFromStartMs = now - startDateMs;
-          const daysCompleted = Math.max(
-            0,
-            Math.floor(diffFromStartMs / (1000 * 60 * 60 * 24))
-          );
-
-          foundEligible = {
-            batch,
-            isEligible: true,
-            deadlineDate: formatReadableDate(new Date(deadlineMs).toISOString()),
-            startDateFormatted: formatReadableDate(batch.start_date),
-            gracePeriodDays: graceDays,
-            daysCompleted,
-          };
-          break;
-        }
-      }
-
-      setEligibleBatchInfo(foundEligible);
+      // 3. Fetch batches for this course in learner region
+      const batches = await fetchBatchesForCourse(courseData.id, learnerRegion);
+      setAllBatches(batches);
+      setCurrentTime(Date.now());
       setHasConfirmedContinue(false);
       setSelectedBatch(null);
 
@@ -163,6 +149,54 @@ function CourseRegistrationContent() {
   const isUk = learner?.region === 'uk';
   const currency: 'INR' | 'GBP' = isUk ? 'GBP' : 'INR';
   const currencySymbol = isUk ? '£' : '₹';
+  const learnerRegion = isUk ? 'uk' : 'india';
+
+  // Compute all eligible batches with existing grace period condition and selected language for learner region
+  const eligibleBatches: EligibleBatchInfo[] = useMemo(() => {
+    if (!currentTime) return [];
+    const targetRegion = learnerRegion.toLowerCase();
+    const selLang = selectedLanguage.toLowerCase();
+
+    return allBatches
+      .filter((b) => b.registrations === 'open')
+      .filter((b) => {
+        const bRegion = (b.region || 'india').toLowerCase();
+        return bRegion === targetRegion;
+      })
+      .filter((b) => {
+        const bLang = (b.language || 'English').toLowerCase();
+        return bLang === selLang;
+      })
+      .map((batch) => {
+        const startDateMs = batch.start_date
+          ? new Date(batch.start_date).getTime()
+          : currentTime;
+        const graceDays = Number(batch.grace_period) || 0;
+        const deadlineMs = startDateMs + graceDays * 24 * 60 * 60 * 1000;
+        const isEligible = deadlineMs > currentTime;
+        const diffFromStartMs = currentTime - startDateMs;
+        const daysCompleted = Math.max(
+          0,
+          Math.floor(diffFromStartMs / (1000 * 60 * 60 * 24))
+        );
+
+        return {
+          batch,
+          isEligible,
+          deadlineDate: formatReadableDate(new Date(deadlineMs).toISOString()),
+          startDateFormatted: formatReadableDate(batch.start_date),
+          gracePeriodDays: graceDays,
+          daysCompleted,
+        };
+      })
+      .filter((info) => info.isEligible);
+  }, [allBatches, currentTime, learnerRegion, selectedLanguage]);
+
+  const isSelectedBatchEligible = selectedBatch
+    ? eligibleBatches.some((info) => info.batch.id === selectedBatch.id)
+    : false;
+  const activeSelectedBatch = isSelectedBatchEligible ? selectedBatch : null;
+  const isConfirmedForRegistration = isSelectedBatchEligible && hasConfirmedContinue;
 
   const baseAmount = isUk
     ? course?.uk_selling_price || course?.uk_price || course?.selling_price || 0
@@ -240,11 +274,14 @@ function CourseRegistrationContent() {
   };
 
   // Handle learner clicking "Continue with this course"
-  const handleContinueWithCourse = () => {
-    if (eligibleBatchInfo?.batch) {
-      setSelectedBatch(eligibleBatchInfo.batch);
+  const handleContinueWithCourse = (batchToConfirm?: BatchItem) => {
+    const target = batchToConfirm || selectedBatch || eligibleBatches[0]?.batch;
+    if (target) {
+      setSelectedBatch(target);
       setHasConfirmedContinue(true);
       setErrorMsg('');
+    } else {
+      setErrorMsg('Please select a batch to continue with this course.');
     }
   };
 
@@ -255,7 +292,7 @@ function CourseRegistrationContent() {
       return;
     }
 
-    if (!selectedBatch || !hasConfirmedContinue) {
+    if (!activeSelectedBatch || !isConfirmedForRegistration) {
       setErrorMsg('Please confirm to continue with this course before paying.');
       return;
     }
@@ -288,7 +325,7 @@ function CourseRegistrationContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           course_id: course.id,
-          batch_id: selectedBatch.id,
+          batch_id: activeSelectedBatch.id,
           amount: totalPayable,
           currency,
           coupon_code: appliedCoupon?.code,
@@ -498,130 +535,221 @@ function CourseRegistrationContent() {
             </div>
 
             {/* Open Batch Status & "Continue with this course" Selection */}
-            <div className="bg-pure-white rounded-2xl border border-dark-black/10 p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="bg-pure-white rounded-2xl border border-dark-black/10 p-5 sm:p-6 shadow-sm space-y-5">
               <h3 className="text-base sm:text-lg font-bold text-dark-black flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-primary-orange" />
                 <span>Batch Status</span>
               </h3>
 
-              {/* When an open batch with start_date + grace_period > Date.now() exists */}
-              {eligibleBatchInfo ? (
-                <div className="space-y-4">
-                  {!hasConfirmedContinue ? (
-                    /* Ask learner to Continue with this course */
-                    <div className="p-5 rounded-2xl bg-soft-cream/60 border-2 border-primary-orange/50 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold uppercase tracking-wide">
-                            Registrations Open
-                          </span>
-                          <strong className="text-base text-dark-black font-mono">
-                            {eligibleBatchInfo.batch.batch_id}
-                          </strong>
-                        </div>
-                      </div>
+              {/* 1. Language Selection First (English or Telugu) */}
+              <div className="p-4 rounded-xl bg-soft-cream/40 border border-soft-orange/30 space-y-2">
+                <label className="block text-xs font-bold text-dark-black uppercase tracking-wider flex items-center gap-1.5">
+                  <Languages className="w-4 h-4 text-primary-orange" />
+                  <span>Select Language</span>
+                </label>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedLanguage('English');
+                      if (selectedBatch && (selectedBatch.language || 'English').toLowerCase() !== 'english') {
+                        setSelectedBatch(null);
+                        setHasConfirmedContinue(false);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                      selectedLanguage === 'English'
+                        ? 'bg-primary-orange text-pure-white shadow-xs'
+                        : 'bg-pure-white border border-soft-orange/40 text-dark-black hover:border-primary-orange'
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedLanguage('Telugu');
+                      if (selectedBatch && (selectedBatch.language || '').toLowerCase() !== 'telugu') {
+                        setSelectedBatch(null);
+                        setHasConfirmedContinue(false);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                      selectedLanguage === 'Telugu'
+                        ? 'bg-primary-orange text-pure-white shadow-xs'
+                        : 'bg-pure-white border border-soft-orange/40 text-dark-black hover:border-primary-orange'
+                    }`}
+                  >
+                    Telugu
+                  </button>
+                </div>
+              </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-dark-black/80">
-                        <div>
-                          Start Date:{' '}
-                          <strong className="text-dark-black">
-                            {eligibleBatchInfo.startDateFormatted}
-                          </strong>
-                        </div>
-                        <div>
-                          Language:{' '}
-                          <strong className="text-dark-black capitalize">
-                            {eligibleBatchInfo.batch.language || 'English'}
-                          </strong>
-                        </div>
-                        <div>
-                          Grace Period:{' '}
-                          <strong className="text-dark-black">
-                            {eligibleBatchInfo.gracePeriodDays} Days
-                          </strong>
-                        </div>
-                        <div>
-                          Days Completed:{' '}
-                          <strong className="text-dark-black">
-                            {eligibleBatchInfo.daysCompleted}{' '}
-                            {eligibleBatchInfo.daysCompleted === 1 ? 'Day' : 'Days'}
-                          </strong>
-                        </div>
-                      </div>
+              {/* 2. Display all batches for this course in learner region with existing grace period & selected language */}
+              {eligibleBatches.length > 0 ? (
+                <div className="space-y-3.5">
+                  <p className="text-xs sm:text-sm font-semibold text-dark-black/70">
+                    Available open batches for <strong className="text-dark-black">{selectedLanguage}</strong> in your region ({isUk ? 'UK' : 'India'}):
+                  </p>
 
-                      <div className="pt-2 border-t border-dark-black/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <p className="text-xs sm:text-sm font-semibold text-dark-black">
-                          Registrations are currently open for this batch. Continue with this course?
-                        </p>
-                        <button
-                          type="button"
-                          onClick={handleContinueWithCourse}
-                          className="px-6 py-2.5 bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white font-extrabold text-xs sm:text-sm rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
+                  <div className="space-y-3">
+                    {eligibleBatches.map((info) => {
+                      const isThisSelected = activeSelectedBatch?.id === info.batch.id;
+                      const isConfirmed = isThisSelected && isConfirmedForRegistration;
+
+                      return (
+                        <div
+                          key={info.batch.id}
+                          onClick={() => {
+                            setSelectedBatch(info.batch);
+                            if (activeSelectedBatch?.id !== info.batch.id) {
+                              setHasConfirmedContinue(false);
+                            }
+                          }}
+                          className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer ${
+                            isConfirmed
+                              ? 'bg-green-50/70 border-green-500 shadow-xs'
+                              : isThisSelected
+                              ? 'bg-soft-cream/80 border-primary-orange shadow-xs'
+                              : 'bg-pure-white border-soft-cream hover:border-soft-orange/60 shadow-2xs'
+                          }`}
                         >
-                          <span>Continue with this course</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Confirmed state */
-                    <div className="p-4 rounded-xl bg-green-50 border border-green-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-bold uppercase tracking-wide">
-                            Registrations Open
-                          </span>
-                          <strong className="text-sm sm:text-base text-dark-black font-mono">
-                            {eligibleBatchInfo.batch.batch_id}
-                          </strong>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-dark-black/10">
+                            <div className="flex items-center gap-2.5">
+                              <input
+                                type="radio"
+                                name="selectedBatch"
+                                checked={isThisSelected}
+                                onChange={() => {
+                                  setSelectedBatch(info.batch);
+                                  if (activeSelectedBatch?.id !== info.batch.id) {
+                                    setHasConfirmedContinue(false);
+                                  }
+                                }}
+                                className="w-4 h-4 text-primary-orange accent-primary-orange cursor-pointer"
+                              />
+                              <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-[11px] font-bold uppercase tracking-wider">
+                                Registrations Open
+                              </span>
+                              <strong className="text-sm sm:text-base text-dark-black font-mono">
+                                {info.batch.batch_id}
+                              </strong>
+                            </div>
+
+                            {isConfirmed ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold shrink-0 self-start sm:self-auto">
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Selected &amp; Confirmed</span>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleContinueWithCourse(info.batch);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white font-extrabold text-xs sm:text-sm transition-all shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
+                              >
+                                <span>Continue with this course</span>
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Batch details grid: Start date, Language, from_time & to_time, Grace period, Days completed */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-3 text-xs sm:text-sm text-dark-black/80">
+                            <div>
+                              <span className="text-dark-black/60">Start Date:</span>{' '}
+                              <strong className="text-dark-black">{info.startDateFormatted}</strong>
+                            </div>
+                            <div>
+                              <span className="text-dark-black/60">Language:</span>{' '}
+                              <strong className="text-dark-black capitalize">{info.batch.language || 'English'}</strong>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-primary-orange shrink-0" />
+                              <span className="text-dark-black/60">From Time:</span>{' '}
+                              <strong className="text-dark-black">{formatTimeString(info.batch.from_time)}</strong>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-primary-orange shrink-0" />
+                              <span className="text-dark-black/60">To Time:</span>{' '}
+                              <strong className="text-dark-black">{formatTimeString(info.batch.to_time)}</strong>
+                            </div>
+                            <div>
+                              <span className="text-dark-black/60">Grace Period:</span>{' '}
+                              <strong className="text-dark-black">{info.gracePeriodDays} Days</strong>
+                            </div>
+                            <div>
+                              <span className="text-dark-black/60">Days Completed:</span>{' '}
+                              <strong className="text-dark-black">
+                                {info.daysCompleted} {info.daysCompleted === 1 ? 'Day' : 'Days'}
+                              </strong>
+                            </div>
+                          </div>
+
+                          {isConfirmed && (
+                            <div className="mt-3 pt-2.5 border-t border-green-200 flex items-center justify-between text-xs">
+                              <span className="text-green-800 font-medium">
+                                Batch <strong className="font-mono">{info.batch.batch_id}</strong> will be used for your enrollment.
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setHasConfirmedContinue(false);
+                                }}
+                                className="text-primary-orange font-bold hover:underline cursor-pointer"
+                              >
+                                Change batch
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <span className="text-xs font-bold text-green-700 flex items-center gap-1">
-                          <Check className="w-4 h-4" /> Confirmed to Continue
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-dark-black/80">
-                        <div>
-                          Start Date:{' '}
-                          <strong className="text-dark-black">
-                            {eligibleBatchInfo.startDateFormatted}
-                          </strong>
-                        </div>
-                        <div>
-                          Language:{' '}
-                          <strong className="text-dark-black capitalize">
-                            {eligibleBatchInfo.batch.language || 'English'}
-                          </strong>
-                        </div>
-                        <div>
-                          Grace Period:{' '}
-                          <strong className="text-dark-black">
-                            {eligibleBatchInfo.gracePeriodDays} Days
-                          </strong>
-                        </div>
-                        <div>
-                          Days Completed:{' '}
-                          <strong className="text-dark-black">
-                            {eligibleBatchInfo.daysCompleted}{' '}
-                            {eligibleBatchInfo.daysCompleted === 1 ? 'Day' : 'Days'}
-                          </strong>
-                        </div>
-                      </div>
+                      );
+                    })}
+                  </div>
+
+                  {activeSelectedBatch && !isConfirmedForRegistration && (
+                    <div className="p-4 rounded-xl bg-primary-orange/10 border border-primary-orange/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <p className="text-xs sm:text-sm font-bold text-dark-black">
+                        Selected Batch: <span className="font-mono text-primary-orange">{activeSelectedBatch.batch_id}</span>. Continue with this course?
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleContinueWithCourse(activeSelectedBatch)}
+                        className="px-6 py-2.5 bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white font-extrabold text-xs sm:text-sm rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
+                      >
+                        <span>Continue with this course</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </div>
               ) : (
-                /* When no open batch with valid grace period exists */
+                /* No open batches for this language */
                 <div className="p-5 rounded-xl bg-soft-cream/40 border border-soft-cream text-xs sm:text-sm text-dark-black/70 space-y-2">
                   <p className="font-semibold text-dark-black">
-                    No open batches currently available for this course.
+                    No open batches currently available in {selectedLanguage} for this course.
                   </p>
                   <p>
-                    Registrations for existing batches may have concluded. Please check back soon or explore our other available programs.
+                    Registrations for existing {selectedLanguage} batches may have concluded or haven&apos;t opened yet.
                   </p>
-                  <div className="pt-2">
+                  <div className="pt-1 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedLanguage(selectedLanguage === 'English' ? 'Telugu' : 'English');
+                        setSelectedBatch(null);
+                        setHasConfirmedContinue(false);
+                      }}
+                      className="px-3.5 py-1.5 rounded-lg bg-soft-cream border border-soft-orange/40 text-xs font-bold text-primary-orange hover:bg-soft-orange/30 cursor-pointer"
+                    >
+                      Switch to {selectedLanguage === 'English' ? 'Telugu' : 'English'} batches
+                    </button>
                     <Link
                       href="/learner/explorecourses"
-                      className="inline-flex items-center gap-1.5 text-primary-orange font-bold hover:underline"
+                      className="inline-flex items-center gap-1.5 text-xs text-dark-black/70 font-bold hover:text-primary-orange"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>Browse other open courses</span>
@@ -772,8 +900,9 @@ function CourseRegistrationContent() {
                 <div className="flex justify-between items-center py-1.5 pt-3">
                   <span className="text-dark-black/70">Batch Code</span>
                   <span className="font-mono font-bold text-dark-black">
-                    {selectedBatch?.batch_id ||
-                      (eligibleBatchInfo ? 'Awaiting Confirmation' : 'None Available')}
+                    {activeSelectedBatch?.batch_id
+                      ? `${activeSelectedBatch.batch_id} (${activeSelectedBatch.language || selectedLanguage})`
+                      : (eligibleBatches.length > 0 ? 'Awaiting Confirmation' : 'None Available')}
                   </span>
                 </div>
 
@@ -795,7 +924,7 @@ function CourseRegistrationContent() {
               <div className="pt-2">
                 <button
                   type="button"
-                  disabled={!selectedBatch || !hasConfirmedContinue || submitting}
+                  disabled={!activeSelectedBatch || !isConfirmedForRegistration || submitting}
                   onClick={handlePayNow}
                   className="w-full py-4 px-6 flex items-center justify-center gap-2 bg-primary-orange hover:bg-soft-orange hover:text-dark-black text-pure-white font-extrabold text-base rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -815,9 +944,9 @@ function CourseRegistrationContent() {
                   )}
                 </button>
 
-                {!hasConfirmedContinue && eligibleBatchInfo && (
+                {!isConfirmedForRegistration && eligibleBatches.length > 0 && (
                   <p className="text-[11px] text-primary-orange text-center font-medium mt-2">
-                    Please click &quot;Continue with this course&quot; above to enable Register &amp; Pay Now.
+                    Please click &quot;Continue with this course&quot; above to select your batch and enable Register &amp; Pay Now.
                   </p>
                 )}
 
