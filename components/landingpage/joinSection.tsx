@@ -9,9 +9,9 @@ export default function JoinSection() {
     'Real time mentorship',
     'Certification',
     'CV & Linkedin Guidance',
-    'Batch wise learnings',
-    'More Lab sessions',
-    'access to industry level Resources',
+    'Batch Wise Learnings',
+    'More Lab Sessions',
+    'Access to Industry Level Resources',
   ];
 
   const headingText = 'We are different! Why?';
@@ -80,7 +80,7 @@ export default function JoinSection() {
               transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
               className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-dark-black leading-tight"
             >
-              We aren&apos;t just selling courses we are offering Real time Work Experience with experts
+              We aren&apos;t just selling courses! we are offering Real time Work Experience with experts
             </motion.h3>
 
             <motion.p
@@ -135,7 +135,7 @@ export default function JoinSection() {
                 type="button"
                 className="group inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-base font-bold bg-primary-orange text-pure-white rounded-lg hover:bg-soft-orange hover:text-dark-black transition-all shadow-xs"
               >
-                <span>Get Startted</span>
+                <span>Get Started</span>
                 <ArrowRight className="w-5 h-5 text-pure-white group-hover:text-dark-black transition-transform duration-300 group-hover:translate-x-1.5 motion-safe:animate-pulse" />
               </button>
 

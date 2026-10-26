@@ -360,7 +360,7 @@ export default function CourseCard({
               </div>
               <ul className="space-y-1.5 text-xs text-dark-black/85 min-h-[78px]">
                 {(course.course_learnings && course.course_learnings.length > 0
-                  ? course.course_learnings.slice(0, 2)
+                  ? course.course_learnings.slice(0, 4)
                   : [
                       'Production-grade implementation techniques',
                       'Real world architecture best practices',
@@ -382,7 +382,7 @@ export default function CourseCard({
               </div>
               <ul className="space-y-1.5 text-xs text-dark-black/85 min-h-[78px]">
                 {(course.course_includes && course.course_includes.length > 0
-                  ? course.course_includes.slice(0, 2)
+                  ? course.course_includes.slice(0, 4)
                   : [
                       `${course.duration} Days of intensive coursework`,
                       'Full lifetime access & verified certificate',
