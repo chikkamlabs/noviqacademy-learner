@@ -114,7 +114,7 @@ function CourseModulesAccordion({
           {/* Replaced 'Course content' with 'Course modules' */}
           <h2 className="text-xl sm:text-2xl font-bold text-dark-black">Course modules</h2>
           <p className="text-xs sm:text-sm text-dark-black/70 mt-1">
-            {course.modules.length} modules • {totalLecturesCount} lectures • {course.duration}{' '}
+            {course.modules.length} modules • {totalLecturesCount}  • {course.duration}{' '}
             days total length
           </p>
         </div>
@@ -405,7 +405,7 @@ function LearnerOpenCourseContent() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-6">
             <div className="border border-soft-cream rounded-2xl p-5 sm:p-6 bg-pure-white shadow-xs space-y-3">
               <h3 className="text-base sm:text-lg font-bold text-dark-black">
-                What this course includes
+                What this course Includes
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-dark-black/85">
                 {course.course_includes.map((inc, idx) => (
@@ -576,7 +576,7 @@ function LearnerOpenCourseContent() {
               {course.course_includes && course.course_includes.length > 0 && (
                 <div className="border border-soft-cream rounded-2xl p-6 sm:p-8 bg-pure-white shadow-xs space-y-4">
                   <h3 className="text-lg sm:text-xl font-bold text-dark-black">
-                    What this course includes
+                    What this course Includes
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm text-dark-black/85">
                     {course.course_includes.map((inc, idx) => (

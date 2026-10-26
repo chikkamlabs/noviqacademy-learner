@@ -123,9 +123,9 @@ function CourseModulesAccordion({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           {/* Replaced 'Course content' with 'Course modules' */}
-          <h2 className="text-xl sm:text-2xl font-bold text-dark-black">Course modules</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-dark-black">Course Modules</h2>
           <p className="text-xs sm:text-sm text-dark-black/70 mt-1">
-            {course.modules.length} modules • {totalLecturesCount} lectures • {course.duration}{' '}
+            {course.modules.length} Modules • {totalLecturesCount} Lectures • {course.duration}{' '}
             days total length
           </p>
         </div>
@@ -429,7 +429,7 @@ function OpenCourseContent() {
           {/* After What you learn Add What course includes(courses.course_includes) */}
           {course.course_includes && course.course_includes.length > 0 && (
             <div className="border border-dark-black/15 rounded-2xl p-5 sm:p-6 bg-pure-white shadow-xs space-y-3.5">
-              <h2 className="text-lg sm:text-xl font-bold text-dark-black">This course includes</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-dark-black">This course Includes</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {course.course_includes.map((inc, idx) => (
                   <div key={idx} className="flex items-start gap-2.5">
