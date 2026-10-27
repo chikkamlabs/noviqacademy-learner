@@ -6,7 +6,7 @@ import LearnerBottomNavigation from '@/components/learner/bottomnavigation';
 
 export default function LearnerDashboardPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-soft-cream">
+    <div className="min-h-screen flex flex-col bg-white">
       <CouponsSection />
       <LearnerHeader />
       <LearnerHeroSection />
