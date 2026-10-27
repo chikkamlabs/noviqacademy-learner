@@ -114,7 +114,7 @@ function CourseModulesAccordion({
           {/* Replaced 'Course content' with 'Course modules' */}
           <h2 className="text-xl sm:text-2xl font-bold text-dark-black">Course modules</h2>
           <p className="text-xs sm:text-sm text-dark-black/70 mt-1">
-            {course.modules.length} modules • {totalLecturesCount}  • {course.duration}{' '}
+            {course.modules.length} modules • {totalLecturesCount} Contents • {course.duration}{' '}
             days total length
           </p>
         </div>
@@ -160,7 +160,7 @@ function CourseModulesAccordion({
                     </span>
                   </div>
                   <div className="text-xs text-dark-black/60 shrink-0">
-                    {lecturesCount} {lecturesCount === 1 ? 'lecture' : 'lectures'}
+                    {lecturesCount} {lecturesCount === 1 ? 'Content' : 'Contents'}
                   </div>
                 </button>
 
@@ -169,7 +169,7 @@ function CourseModulesAccordion({
                   <div className="px-5 py-3 bg-soft-cream/20 border-t border-soft-cream/60 space-y-2.5">
                     {lecturesCount === 0 ? (
                       <p className="text-xs text-dark-black/50 py-1 italic">
-                        No content lectures uploaded for this module yet.
+                        No Content uploaded for this module yet.
                       </p>
                     ) : (
                       module.contents.map((content) => (

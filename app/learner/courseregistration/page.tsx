@@ -147,6 +147,7 @@ function CourseRegistrationContent() {
 
   // Pricing & Currency calculations
   const isUk = learner?.region === 'uk';
+  const [selectedCurrency, setSelectedCurrency] = useState<'GBP' | 'INR'>('GBP');
   const currency: 'INR' | 'GBP' = isUk ? 'GBP' : 'INR';
   const currencySymbol = isUk ? '£' : '₹';
   const learnerRegion = isUk ? 'uk' : 'india';
@@ -204,6 +205,15 @@ function CourseRegistrationContent() {
 
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
   const totalPayable = Math.max(0, baseAmount - couponDiscount);
+
+  // Conversion only on Total Payable for UK learner tapping INR
+  const inrBasePrice = course?.selling_price || course?.price || 0;
+  const ukBasePrice =
+    course?.uk_selling_price || course?.uk_price || course?.selling_price || 1;
+  const inrTotalPayable =
+    ukBasePrice > 0
+      ? Math.max(0, Math.round(totalPayable * 130))
+      : inrBasePrice;
 
   // Handle Apply Coupon
   const handleApplyCoupon = async () => {
@@ -302,6 +312,42 @@ function CourseRegistrationContent() {
       return;
     }
 
+    // If UK learner selected GBP: Redirect to WhatsApp (+91 81884871722) with details formatted message
+    if (isUk && selectedCurrency === 'GBP') {
+      const messageLines = [
+        'Hello Noviq Academy! 👋',
+        '',
+        '*[Course Registration Request - UK (GBP)]*',
+        `*Course:* ${course.title}`,
+        `*Batch Code:* ${activeSelectedBatch.batch_id} (${activeSelectedBatch.language || selectedLanguage})`,
+        activeSelectedBatch.start_date ? `*Start Date:* ${formatReadableDate(activeSelectedBatch.start_date)}` : '',
+        (activeSelectedBatch.from_time || activeSelectedBatch.to_time)
+          ? `*Timings:* ${formatTimeString(activeSelectedBatch.from_time)} - ${formatTimeString(activeSelectedBatch.to_time)}`
+          : '',
+        '',
+        '*[Learner Details]*',
+        `*Name:* ${learner.name || 'Learner'}`,
+        learner.email ? `*Email:* ${learner.email}` : '',
+        learner.mobile ? `*Phone:* ${learner.mobile}` : '',
+        `*Region:* United Kingdom (UK)`,
+        '',
+        '*[Payment Summary]*',
+        `*Course Tuition Fee:* £${baseAmount.toLocaleString()}`,
+        appliedCoupon ? `*Coupon Discount (${appliedCoupon.code}):* -£${appliedCoupon.discount.toLocaleString()}` : '',
+        appliedReferral ? `*Referral Code:* ${appliedReferral.code} (${appliedReferral.name})` : '',
+        `*Total Payable:* £${totalPayable.toLocaleString()} GBP`,
+        '',
+        'I would like to complete my registration in GBP. Please guide me with payment details & next steps.',
+        '',
+        'Sent from Noviq Academy Course Registration',
+      ].filter(Boolean);
+
+      const formatted = messageLines.join('\n');
+      const targetUrl = `https://wa.me/9181884871722?text=${encodeURIComponent(formatted)}`;
+      window.location.href = targetUrl;
+      return;
+    }
+
     if (!learner?.email) {
       setErrorMsg('Learner email is required. Please ensure your email is updated on your profile.');
       return;
@@ -319,6 +365,9 @@ function CourseRegistrationContent() {
     setErrorMsg('');
 
     try {
+      // Amount to pay: if UK learner tapped INR, use inrTotalPayable; otherwise totalPayable (India learner)
+      const payableAmount = isUk && selectedCurrency === 'INR' ? inrTotalPayable : totalPayable;
+
       // 1. Create order via Cashfree create_order API route with real authenticated data
       const response = await fetch('/api/payments/cashfree/create_order', {
         method: 'POST',
@@ -326,8 +375,8 @@ function CourseRegistrationContent() {
         body: JSON.stringify({
           course_id: course.id,
           batch_id: activeSelectedBatch.id,
-          amount: totalPayable,
-          currency,
+          amount: payableAmount,
+          currency: 'INR',
           coupon_code: appliedCoupon?.code,
           referral_by: appliedReferral?.learnerId || null,
           customer_details: {
@@ -876,6 +925,44 @@ function CourseRegistrationContent() {
 
               {/* Fee Breakdown */}
               <div className="space-y-3 text-xs sm:text-sm divide-y divide-soft-cream">
+                {/* For UK region learner: ask currency (INR or GBP) just above Course Tuition Fee */}
+                {isUk && (
+                  <div className="pb-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-dark-black">
+                        Select Currency
+                      </span>
+                      <span className="text-[11px] text-dark-black/60 font-medium">
+                        {selectedCurrency === 'INR' ? 'Paying in Indian Rupees (₹)' : 'Paying in British Pounds (£)'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCurrency('INR')}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          selectedCurrency === 'INR'
+                            ? 'bg-primary-orange text-pure-white shadow-xs'
+                            : 'bg-soft-cream/60 text-dark-black border border-dark-black/15 hover:border-primary-orange'
+                        }`}
+                      >
+                        <span>INR (₹)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCurrency('GBP')}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          selectedCurrency === 'GBP'
+                            ? 'bg-primary-orange text-pure-white shadow-xs'
+                            : 'bg-soft-cream/60 text-dark-black border border-dark-black/15 hover:border-primary-orange'
+                        }`}
+                      >
+                        <span>GBP (£)</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center py-1.5">
                   <span className="text-dark-black/70">Course Tuition Fee</span>
                   <span className="font-semibold text-dark-black">
@@ -914,8 +1001,9 @@ function CourseRegistrationContent() {
                 <div className="flex justify-between items-center py-2 pt-3 text-sm sm:text-base font-extrabold">
                   <span className="text-dark-black">Total Payable</span>
                   <span className="text-primary-orange text-lg sm:text-xl">
-                    {currencySymbol}
-                    {totalPayable.toLocaleString()}
+                    {isUk && selectedCurrency === 'INR'
+                      ? `₹${inrTotalPayable.toLocaleString()}`
+                      : `${currencySymbol}${totalPayable.toLocaleString()}`}
                   </span>
                 </div>
               </div>
@@ -937,21 +1025,26 @@ function CourseRegistrationContent() {
                     <>
                       <ShieldCheck className="w-5 h-5" />
                       <span>
-                        Register &amp; Pay Now ({currencySymbol}
-                        {totalPayable.toLocaleString()})
+                        Register &amp; Pay Now (
+                        {isUk && selectedCurrency === 'INR'
+                          ? `₹${inrTotalPayable.toLocaleString()}`
+                          : `${currencySymbol}${totalPayable.toLocaleString()}`}
+                        )
                       </span>
                     </>
                   )}
                 </button>
-
                 {!isConfirmedForRegistration && eligibleBatches.length > 0 && (
                   <p className="text-[11px] text-primary-orange text-center font-medium mt-2">
                     Please click &quot;Continue with this course&quot; above to select your batch and enable Register &amp; Pay Now.
                   </p>
                 )}
-
                 <p className="text-[11px] text-center text-dark-black/50 mt-2">
-                  Secure checkout via Cashfree Payments. Instant activation with status: <strong>active</strong>.
+                  {isUk && selectedCurrency === 'GBP'
+                    ? 'UK enrollment in GBP is completed via WhatsApp (+91 81884871722).'
+                    : (
+                      <>Secure checkout via Cashfree Payments. Instant activation with status: <strong>active</strong>.</>
+                    )}
                 </p>
               </div>
             </div>

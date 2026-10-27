@@ -125,7 +125,7 @@ function CourseModulesAccordion({
           {/* Replaced 'Course content' with 'Course modules' */}
           <h2 className="text-xl sm:text-2xl font-bold text-dark-black">Course Modules</h2>
           <p className="text-xs sm:text-sm text-dark-black/70 mt-1">
-            {course.modules.length} Modules • {totalLecturesCount} Lectures • {course.duration}{' '}
+            {course.modules.length} Modules • {totalLecturesCount} Contents • {course.duration}{' '}
             days total length
           </p>
         </div>
@@ -170,7 +170,7 @@ function CourseModulesAccordion({
                     </span>
                   </div>
                   <span className="text-xs text-dark-black/60 font-medium shrink-0 ml-2">
-                    {module.contents?.length || 0} lectures
+                    {module.contents?.length || 0} Contents
                   </span>
                 </button>
 
@@ -191,7 +191,7 @@ function CourseModulesAccordion({
                       ))
                     ) : (
                       <p className="text-xs text-dark-black/50 italic py-1">
-                        No lectures available in this module yet.
+                        No Contents available in this module yet.
                       </p>
                     )}
                   </div>

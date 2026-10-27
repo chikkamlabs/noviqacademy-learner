@@ -80,7 +80,7 @@ export default function JoinSection() {
               transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
               className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-dark-black leading-tight"
             >
-              We aren&apos;t just selling courses! we are offering Real time Work Experience with experts
+              We don&apos;t Just Teach!!! We Prepare You for the Real World.
             </motion.h3>
 
             <motion.p
@@ -90,7 +90,7 @@ export default function JoinSection() {
               transition={{ duration: 0.6, delay: 0.45, ease: 'easeOut' }}
               className="text-base sm:text-lg text-dark-black font-normal leading-relaxed"
             >
-              We find that Students and Fresh Grads facing problems with the lack of practicals
+              We understand that students and recent graduates often lack practical experience. Hence, we focus on hands-on learning, real-world projects and guidance from industry professionals.
             </motion.p>
 
             <motion.div

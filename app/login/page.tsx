@@ -91,7 +91,7 @@ export default function LoginPage() {
             Log in to your account
           </h2>
           <p className="mt-2 text-sm text-dark-black/70">
-            Didn&apos;t have account?{' '}
+            Didn&apos;t have an account?{' '}
             <Link
               href="/signup"
               className="font-semibold text-primary-orange hover:text-dark-black transition-colors underline"
@@ -175,7 +175,7 @@ export default function LoginPage() {
                   }}
                   className="text-xs sm:text-sm font-medium text-primary-orange hover:text-dark-black hover:underline cursor-pointer"
                 >
-                  forgot password! click here.
+                  Forgot Password?
                 </button>
               </div>
 
