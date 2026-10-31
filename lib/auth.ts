@@ -30,6 +30,7 @@ export async function signUpLearner({
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           name,
           full_name: name,
