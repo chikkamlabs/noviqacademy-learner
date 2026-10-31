@@ -21,7 +21,6 @@ export default function SignUpPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
@@ -99,14 +98,8 @@ export default function SignUpPage() {
       return;
     }
 
-    
-
-    // On successful insertion, 
-    setSuccess('Congratulations! Your account has been created successfully. Redirecting to login in 5 seconds...');
-
-    setTimeout(() => {
-      router.push('/login');
-    }, 3000);
+    // On successful insertion, redirect to /confirmemail
+    router.push('/confirmemail');
   };
 
   return (
@@ -137,20 +130,6 @@ export default function SignUpPage() {
                 {error}
               </div>
             )}
-            {success && (
-  <div
-    role="status"
-    className="mb-6 p-4 rounded-md bg-green-50 border border-green-200 text-sm text-green-700"
-  >
-    <p className="font-bold text-base">Congratulations! 🎉</p>
-    <p className="mt-1">
-      Your account has been created successfully.
-    </p>
-    <p className="mt-2">
-      Redirecting you to the login page in 3 seconds...
-    </p>
-  </div>
-)}
 
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
               <div>
@@ -260,12 +239,12 @@ export default function SignUpPage() {
 
               <div className="pt-2">
                 <button
-  type="submit"
-  disabled={loading || !!success}
-  className="w-full py-2.5 px-4 font-semibold text-pure-white bg-primary-orange hover:bg-soft-orange hover:text-dark-black rounded-md shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
->
-  {loading ? 'Creating...' : success ? 'Account Created!' : 'Create'}
-</button>
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 px-4 font-semibold text-pure-white bg-primary-orange hover:bg-soft-orange hover:text-dark-black rounded-md shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {loading ? 'Creating...' : 'Create'}
+                </button>
               </div>
             </form>
           </div>
