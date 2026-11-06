@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion, type Variants } from 'motion/react';
 import { ArrowRight, Check } from 'lucide-react';
 
@@ -131,21 +132,21 @@ export default function JoinSection() {
               transition={{ duration: 0.6, delay: 1.15, ease: 'easeOut' }}
               className="flex flex-wrap items-center gap-4 pt-4"
             >
-              <button
-                type="button"
+              <Link
+                href="/signup"
                 className="group inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-base font-bold bg-primary-orange text-pure-white rounded-lg hover:bg-soft-orange hover:text-dark-black transition-all shadow-xs"
               >
                 <span>Get Started</span>
                 <ArrowRight className="w-5 h-5 text-pure-white group-hover:text-dark-black transition-transform duration-300 group-hover:translate-x-1.5 motion-safe:animate-pulse" />
-              </button>
+              </Link>
 
-              {/* Explore Courses CTA button with black border removed */}
-              <button
-                type="button"
+              {/* Explore Courses */}
+              <Link
+                href="/publicexplorecourses"
                 className="inline-flex items-center justify-center px-6 py-3.5 text-base font-bold bg-soft-cream text-dark-black rounded-lg hover:bg-soft-orange/30 hover:text-primary-orange transition-all shadow-xs"
               >
                 Explore Courses
-              </button>
+              </Link>
             </motion.div>
           </div>
 
