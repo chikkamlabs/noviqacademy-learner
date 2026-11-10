@@ -9,6 +9,7 @@ export interface StudyCourseDetails {
   batch_uuid?: string;
   batch_code?: string;
   time_display?: string;
+  progress?: number;
 }
 
 export interface StudyBatchBoardMessage {
@@ -174,6 +175,7 @@ export async function getStudyDetails(batchIdParam?: string | null): Promise<Stu
     let startDate = '';
     let fromTime = '';
     let toTime = '';
+    let batchProgress = 0;
     let courseUuid = matchedReg?.course_id || '';
 
     if (targetBatchId) {
@@ -183,7 +185,7 @@ export async function getStudyDetails(batchIdParam?: string | null): Promise<Stu
 
       let batchQuery = supabase
         .from('batches')
-        .select('id, batch_id, course_id, start_date, end_date, from_time, to_time');
+        .select('id, batch_id, course_id, start_date, end_date, from_time, to_time, progress');
 
       if (isUuid) {
         batchQuery = batchQuery.or(`id.eq.${targetBatchId},batch_id.eq.${targetBatchId}`);
@@ -199,6 +201,9 @@ export async function getStudyDetails(batchIdParam?: string | null): Promise<Stu
         startDate = batchData.start_date || '';
         fromTime = batchData.from_time || '';
         toTime = batchData.to_time || '';
+        if (batchData.progress !== undefined && batchData.progress !== null) {
+          batchProgress = Number(batchData.progress) || 0;
+        }
         if (batchData.course_id) {
           courseUuid = batchData.course_id;
         }
@@ -266,6 +271,7 @@ export async function getStudyDetails(batchIdParam?: string | null): Promise<Stu
       batch_uuid: batchUuid || undefined,
       batch_code: batchCode,
       time_display: timeDisplay,
+      progress: batchProgress,
     };
   } catch (err) {
     console.warn('Exception in getStudyDetails:', err);
@@ -365,3 +371,55 @@ export async function getStudyBatchBoard(
     return fallbackBoard;
   }
 }
+
+/**
+ * Check if any batch board record is available in batch_board table for a given batch
+ */
+export async function checkHasBatchBoard(batchIdOrUuid?: string | null): Promise<boolean> {
+  if (!batchIdOrUuid) return false;
+
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(batchIdOrUuid);
+    let resolvedBatchUuid: string | null = null;
+
+    if (isUuid) {
+      resolvedBatchUuid = batchIdOrUuid;
+    } else {
+      const { data: bRow } = await supabase
+        .from('batches')
+        .select('id')
+        .eq('batch_id', batchIdOrUuid)
+        .maybeSingle();
+
+      if (bRow?.id) {
+        resolvedBatchUuid = bRow.id;
+      }
+    }
+
+    if (resolvedBatchUuid) {
+      const { count, error } = await supabase
+        .from('batch_board')
+        .select('id', { count: 'exact', head: true })
+        .eq('batch_id', resolvedBatchUuid);
+
+      if (!error && count !== null && count > 0) {
+        return true;
+      }
+    }
+
+    const { count: directCount, error: directErr } = await supabase
+      .from('batch_board')
+      .select('id', { count: 'exact', head: true })
+      .or(`batch_id.eq.${batchIdOrUuid},id.eq.${batchIdOrUuid}`);
+
+    if (!directErr && directCount !== null && directCount > 0) {
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    console.warn('Error checking batch board existence:', err);
+    return false;
+  }
+}
+
