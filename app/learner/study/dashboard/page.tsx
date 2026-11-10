@@ -17,12 +17,15 @@ import {
   Lock,
   Share2,
   Check,
+  Menu,
 } from 'lucide-react';
 import LearnerHeader from '@/components/learner/header';
 import LearnerBottomNavigation from '@/components/learner/bottomnavigation';
+import StudySidebar from '@/components/study/sidebar';
 import {
   getStudyDetails,
   getStudyBatchBoard,
+  checkHasBatchBoard,
   StudyCourseDetails,
   StudyBatchBoardData,
 } from '@/lib/studyStore';
@@ -33,8 +36,10 @@ function StudyDashboardContent() {
 
   const [course, setCourse] = useState<StudyCourseDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Batch Board Modal State
+  // Batch Board Availability & Modal State
+  const [hasBoardRecord, setHasBoardRecord] = useState(false);
   const [isBoardOpen, setIsBoardOpen] = useState(false);
   const [boardData, setBoardData] = useState<StudyBatchBoardData | null>(null);
   const [boardLoading, setBoardLoading] = useState(false);
@@ -101,6 +106,22 @@ function StudyDashboardContent() {
     };
   }, [batchIdParam]);
 
+  // Check if any batch board record is available in batch_board table for this batch
+  useEffect(() => {
+    if (!course) return;
+    let isMounted = true;
+    async function checkBoard() {
+      const hasRecord = await checkHasBatchBoard(course?.batch_uuid || course?.batch_id || course?.batch_code);
+      if (isMounted) {
+        setHasBoardRecord(hasRecord);
+      }
+    }
+    checkBoard();
+    return () => {
+      isMounted = false;
+    };
+  }, [course]);
+
   // Load batch board data strictly via lib/studyStore.ts when modal opens
   useEffect(() => {
     if (!isBoardOpen || !course) return;
@@ -140,54 +161,46 @@ function StudyDashboardContent() {
     }
   }, [isBoardOpen, boardLoading, boardData?.messages]);
 
-  // Share Course + View course page actions (rendered beside the badge on
-  // desktop, and below the title on mobile)
-  const courseActions = course ? (
-    <div className="flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        onClick={handleShareCourse}
-        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-soft-cream hover:bg-soft-orange/30 text-dark-black hover:text-primary-orange border border-soft-orange/50 text-xs sm:text-sm font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-        aria-label="Share Course"
-      >
-        {shareCopied ? (
-          <Check className="w-4 h-4 text-green-600 shrink-0" />
-        ) : (
-          <Share2 className="w-4 h-4 text-primary-orange shrink-0" />
-        )}
-        <span>{shareCopied ? 'Link Copied!' : 'Share Course'}</span>
-      </button>
-
-      <Link
-        href={`/courses/opencourse?id=${course.course_id}`}
-        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-dark-black/60 hover:text-primary-orange transition-colors"
-      >
-        <span>View course page</span>
-      </Link>
-    </div>
-  ) : null;
-
   return (
     <div className="min-h-screen flex flex-col bg-soft-cream">
       {/* 1. Header Attached */}
       <LearnerHeader />
 
-      {/* ============================================================== */}
-      {/* STATIC FIX CONTAINER: "Go to my courses" + Batch details div   */}
-      {/* Fixed below header (top-16 / top-20), will NOT move with scroll */}
-      {/* ============================================================== */}
-      <div className="sticky top-16 sm:top-20 z-40 bg-soft-cream/95 backdrop-blur-md border-b border-soft-orange/30 shadow-2xs">
-        <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 space-y-3">
-          {/* Go to my courses - Static Fix */}
-          <div>
-            <Link
-              href="/learner/courses/dashboard"
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:py-2 rounded-xl bg-pure-white border border-soft-cream text-xs sm:text-sm font-bold text-dark-black hover:text-primary-orange hover:border-primary-orange/40 transition-all shadow-2xs cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4 text-primary-orange" />
-              <span>Go to my courses</span>
-            </Link>
-          </div>
+      {/* Main Study Layout: Sidebar on Left + Dashboard Content on Right */}
+      <div className="flex-1 flex w-full">
+        {/* Desktop Sidebar: Sticks to left, sticks top at header; Mobile Drawer */}
+        <StudySidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          activeItem="home"
+          batchProgress={course?.progress}
+        />
+
+        {/* Dashboard Content Column */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* STATIC FIX CONTAINER: "Go to my courses" + Batch details div */}
+          {/* Fixed below header (top-16 / top-20), will NOT move with scroll */}
+          <div className="sticky top-16 sm:top-20 z-20 bg-soft-cream/95 backdrop-blur-md border-b border-soft-orange/30 shadow-2xs">
+            <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 space-y-3">
+              {/* Three lines beside left of Go to my courses - visible on other devices, hidden on desktop */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen((prev) => !prev)}
+                  className="lg:hidden p-2 rounded-xl bg-pure-white border border-soft-cream text-dark-black hover:text-primary-orange hover:border-primary-orange/40 transition-all shadow-2xs cursor-pointer flex items-center justify-center shrink-0"
+                  aria-label="Toggle study navigation menu"
+                >
+                  <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-primary-orange" />
+                </button>
+
+                <Link
+                  href="/learner/courses/dashboard"
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:py-2 rounded-xl bg-pure-white border border-soft-cream text-xs sm:text-sm font-bold text-dark-black hover:text-primary-orange hover:border-primary-orange/40 transition-all shadow-2xs cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4 text-primary-orange" />
+                  <span>Go to my courses</span>
+                </Link>
+              </div>
 
           {/* Batch details div - Static Fix (No move with scroll) */}
           <div className="bg-pure-white rounded-2xl border-2 border-soft-cream p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -196,7 +209,7 @@ function StudyDashboardContent() {
                 <Radio className="w-5 h-5 animate-pulse" />
               </div>
               <div className="min-w-0">
-                <p className="font-serif text-xs sm:text-sm font-bold text-dark-black tracking-normal truncate">
+                <p className="text-xs sm:text-sm font-bold text-dark-black tracking-normal truncate">
                   See the Batch board for all the updates.
                 </p>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-xs text-dark-black/70">
@@ -216,14 +229,26 @@ function StudyDashboardContent() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsBoardOpen(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl bg-primary-orange hover:bg-soft-orange text-pure-white hover:text-dark-black text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer shrink-0"
-            >
-              <Radio className="w-4 h-4" />
-              <span>Open Batch Board</span>
-            </button>
+            {hasBoardRecord ? (
+              <button
+                type="button"
+                onClick={() => setIsBoardOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl bg-primary-orange hover:bg-soft-orange text-pure-white hover:text-dark-black text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer shrink-0"
+              >
+                <Radio className="w-4 h-4 animate-pulse" />
+                <span>Open Batch Board</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl bg-dark-black/10 text-dark-black/40 border border-soft-cream text-xs sm:text-sm font-bold transition-all shadow-none cursor-not-allowed shrink-0 select-none opacity-80"
+                title="No batch board record available for this batch"
+              >
+                <Radio className="w-4 h-4 opacity-50" />
+                <span>Open Batch Board</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -255,17 +280,12 @@ function StudyDashboardContent() {
         ) : (
           <div className="space-y-6">
             {/* Main Study Card */}
-            <div className="bg-pure-white rounded-2xl border-2 border-soft-cream shadow-xs p-5 sm:p-7 space-y-5">
-              {/* Enrolled badge (+ actions beside it on desktop) + course name */}
+            <div className="bg-pure-white rounded-2xl border-2 border-soft-cream shadow-xs p-5 sm:p-7 space-y-6">
+              {/* below it write: course name + course topics */}
               <div className="space-y-3.5 pb-5 border-b border-soft-cream">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-soft-cream border border-soft-orange/40 text-[11px] font-bold text-primary-orange uppercase tracking-wider">
-                    <BookOpen className="w-3.5 h-3.5" />
-                    <span>Enrolled Course</span>
-                  </div>
-
-                  {/* Desktop: Share Course + View course page beside the badge */}
-                  <div className="hidden sm:block">{courseActions}</div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-soft-cream border border-soft-orange/40 text-[11px] font-bold text-primary-orange uppercase tracking-wider">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Enrolled Course</span>
                 </div>
 
                 {/* Course Name */}
@@ -273,24 +293,52 @@ function StudyDashboardContent() {
                   {course.course_title}
                 </h1>
 
-                {/* Mobile: actions stay below the title */}
-                <div className="sm:hidden pt-1">{courseActions}</div>
-              </div>
+                {/* Share Course (Button with share icon, links/shares app/courses/opencourse/page.tsx) */}
+                <div className="pt-1 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleShareCourse}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-soft-cream hover:bg-soft-orange/30 text-dark-black hover:text-primary-orange border border-soft-orange/50 text-xs sm:text-sm font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                    aria-label="Share Course"
+                  >
+                    {shareCopied ? (
+                      <Check className="w-4 h-4 text-green-600 shrink-0" />
+                    ) : (
+                      <Share2 className="w-4 h-4 text-primary-orange shrink-0" />
+                    )}
+                    <span>{shareCopied ? 'Link Copied!' : 'Share Course'}</span>
+                  </button>
 
-              {/* Course start date (compact, highlighted) */}
-              <div className="inline-flex max-w-full items-center gap-2.5 px-3 py-2 rounded-xl bg-primary-orange/10 border border-primary-orange shadow-2xs">
-                <div className="w-7 h-7 rounded-lg bg-pure-white text-primary-orange flex items-center justify-center shrink-0 border border-primary-orange/30">
-                  <Calendar className="w-4 h-4" />
+                  <Link
+                    href={`/courses/opencourse?id=${course.course_id}`}
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-dark-black/60 hover:text-primary-orange transition-colors"
+                  >
+                    <span>View course page</span>
+                  </Link>
                 </div>
-                <p className="text-xs sm:text-sm font-bold text-dark-black">
-                  Course will start from{' '}
-                  <span className="text-primary-orange bg-pure-white px-2 py-0.5 rounded-md border border-primary-orange/30 inline-block font-extrabold">
-                    {course.start_date}
-                  </span>
-                </p>
               </div>
 
-              {/* All the Links, course Resources will be shared once course started. */}
+              {/* and Write Course will start from the course.start_date.(Highlight) */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-primary-orange/10 border-2 border-primary-orange shadow-2xs">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pure-white text-primary-orange flex items-center justify-center shrink-0 shadow-2xs border border-primary-orange/30">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-primary-orange block sm:hidden">
+                      Schedule Notice
+                    </span>
+                    <p className="text-sm sm:text-base font-extrabold text-dark-black">
+                      Course will start from{' '}
+                      <span className="text-primary-orange bg-pure-white px-2.5 py-0.5 rounded-md border border-primary-orange/30 inline-block mt-0.5 sm:mt-0 font-extrabold">
+                        {course.start_date}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* and All the Links, course Resources will be shared once course started. */}
               <div className="p-4 sm:p-5 rounded-2xl bg-soft-cream/60 border border-soft-orange/30">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-pure-white text-primary-orange flex items-center justify-center shrink-0 border border-soft-cream shadow-2xs">
@@ -305,6 +353,8 @@ function StudyDashboardContent() {
           </div>
         )}
       </main>
+        </div>
+      </div>
 
       {/* ============================================================== */}
       {/* BATCH BOARD MODAL OVERLAY (Powered strictly by lib/studyStore) */}

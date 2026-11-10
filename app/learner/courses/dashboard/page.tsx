@@ -20,11 +20,13 @@ import {
   LearnerBoughtCourse,
   formatBatchDate,
 } from '@/lib/learnercourses';
+import { checkHasBatchBoard } from '@/lib/studyStore';
 
 export default function LearnerCoursesDashboardPage() {
   const router = useRouter();
   const [courses, setCourses] = useState<LearnerBoughtCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [availableBoards, setAvailableBoards] = useState<Record<string, boolean>>({});
   const [selectedBatchForBoard, setSelectedBatchForBoard] =
     useState<LearnerBoughtCourse | null>(null);
 
@@ -34,6 +36,17 @@ export default function LearnerCoursesDashboardPage() {
       const data = await getLearnerBoughtCourses();
       setCourses(data);
       setLoading(false);
+
+      // Verify if batch board record exists for each batch
+      const boardMap: Record<string, boolean> = {};
+      for (const c of data) {
+        const batchKey = c.batch_uuid || c.batch_id;
+        if (batchKey && boardMap[batchKey] === undefined) {
+          const hasBoard = await checkHasBatchBoard(batchKey);
+          boardMap[batchKey] = hasBoard;
+        }
+      }
+      setAvailableBoards(boardMap);
     }
     loadBoughtCourses();
   }, []);
@@ -164,19 +177,32 @@ export default function LearnerCoursesDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Right: Batch board button */}
+                    {/* Right: Batch board button (Only allow to Open if batch board record exists) */}
                     <div className="shrink-0 flex items-center">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBatchForBoard(course);
-                        }}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-orange hover:bg-soft-orange text-pure-white hover:text-dark-black text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer"
-                      >
-                        <Radio className="w-4 h-4 animate-pulse" />
-                        <span>Batch Board</span>
-                      </button>
+                      {availableBoards[course.batch_uuid || course.batch_id] ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBatchForBoard(course);
+                          }}
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-orange hover:bg-soft-orange text-pure-white hover:text-dark-black text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer"
+                        >
+                          <Radio className="w-4 h-4 animate-pulse" />
+                          <span>Batch Board</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-dark-black/10 text-dark-black/40 border border-soft-cream text-xs sm:text-sm font-bold transition-all shadow-none cursor-not-allowed select-none opacity-80"
+                          title="No batch board record available for this batch"
+                        >
+                          <Radio className="w-4 h-4 opacity-50" />
+                          <span>Batch Board</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
