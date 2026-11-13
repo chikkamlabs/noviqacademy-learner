@@ -100,12 +100,13 @@ const fallbackQuestions: ExamQuestionItem[] = [
 /**
  * Start Exam:
  * Inserts a record in the exams_conducted table:
- * (exam_id, learner_id as member_id, points=0, correct=0, wrong=0, results_released=false, submitted=false)
+ * (exam_id, learner_id as member_id, batch_exam, points=0, correct=0, wrong=0, results_released=false, submitted=false)
  */
 export async function startExamSession(
   examId: string,
-  batchIdOrCode?: string | null
-): Promise<{ conducted_id: string; success: boolean }> {
+  batchIdOrCode?: string | null,
+  batchExamId?: string | null
+): Promise<{ conducted_id: string; success: boolean; alreadyGiven?: boolean }> {
   try {
     const isUuid = (val?: string | null) =>
       Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
@@ -116,8 +117,11 @@ export async function startExamSession(
 
     const learnerId = user?.id;
 
-    // 1. Resolve actual course_exams.id
+    // 1. Resolve actual course_exams.id and batch_exams.id
     let actualExamId = examId;
+    let resolvedBatchUuid: string | null = null;
+    let resolvedBatchExamId: string | null = isUuid(batchExamId) ? batchExamId! : null;
+
     if (isUuid(examId)) {
       const { data: ceCheck } = await supabase
         .from('course_exams')
@@ -129,18 +133,23 @@ export async function startExamSession(
         // Might be a batch_exams.id
         const { data: beCheck } = await supabase
           .from('batch_exams')
-          .select('exam_id')
+          .select('id, exam_id, batch_id')
           .eq('id', examId)
           .maybeSingle();
 
         if (beCheck?.exam_id) {
           actualExamId = beCheck.exam_id;
+          if (!resolvedBatchExamId) {
+            resolvedBatchExamId = beCheck.id;
+          }
+          if (!resolvedBatchUuid && beCheck.batch_id) {
+            resolvedBatchUuid = beCheck.batch_id;
+          }
         }
       }
     }
 
     // 2. Resolve batch UUID and member_id from batch_learners
-    let resolvedBatchUuid: string | null = null;
     let memberId: string | null = null;
 
     if (batchIdOrCode) {
@@ -173,6 +182,20 @@ export async function startExamSession(
         if (!resolvedBatchUuid && blList[0].batch_id) {
           resolvedBatchUuid = blList[0].batch_id;
         }
+      }
+    }
+
+    // Resolve batch_exams.id if not directly provided
+    if (!resolvedBatchExamId && resolvedBatchUuid && isUuid(actualExamId)) {
+      const { data: beRow } = await supabase
+        .from('batch_exams')
+        .select('id')
+        .eq('batch_id', resolvedBatchUuid)
+        .eq('exam_id', actualExamId)
+        .maybeSingle();
+
+      if (beRow?.id) {
+        resolvedBatchExamId = beRow.id;
       }
     }
 
@@ -211,21 +234,40 @@ export async function startExamSession(
       memberId = learnerId || '00000000-0000-0000-0000-000000000000';
     }
 
-    // Check if an unsubmitted conducted exam record already exists for this exam and member
-    if (memberId && actualExamId) {
-      const { data: existingConducted } = await supabase
+    // Check existing exams_conducted records for this member
+    if (memberId && isUuid(actualExamId)) {
+      const { data: memberConductedRows } = await supabase
         .from('exams_conducted')
-        .select('id, submitted')
-        .eq('exam_id', actualExamId)
+        .select('id, exam_id, batch_exam, submitted, created_at')
         .eq('member_id', memberId)
-        .eq('submitted', false)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
-      if (existingConducted?.id) {
+      const matchingRows = (memberConductedRows || []).filter((row) => {
+        if (resolvedBatchExamId && row.batch_exam) {
+          return row.batch_exam === resolvedBatchExamId;
+        }
+        return row.exam_id === actualExamId;
+      });
+
+      const alreadySubmittedRow = matchingRows.find((row) => row.submitted === true);
+      if (alreadySubmittedRow?.id) {
         return {
-          conducted_id: existingConducted.id,
+          conducted_id: alreadySubmittedRow.id,
+          success: false,
+          alreadyGiven: true,
+        };
+      }
+
+      const existingUnsubmitted = matchingRows.find((row) => row.submitted === false);
+      if (existingUnsubmitted?.id) {
+        if (!existingUnsubmitted.batch_exam && resolvedBatchExamId) {
+          await supabase
+            .from('exams_conducted')
+            .update({ batch_exam: resolvedBatchExamId })
+            .eq('id', existingUnsubmitted.id);
+        }
+        return {
+          conducted_id: existingUnsubmitted.id,
           success: true,
         };
       }
@@ -235,6 +277,7 @@ export async function startExamSession(
     const insertPayload = {
       exam_id: actualExamId,
       member_id: memberId,
+      ...(resolvedBatchExamId ? { batch_exam: resolvedBatchExamId } : {}),
       points: 0,
       correct: 0,
       wrong: 0,

@@ -140,6 +140,7 @@ export default function Header({
   const menuItems = [
     { label: 'Home', href: '/' },
     { label: 'Explore courses', href: '/publicexplorecourses' },
+    { label: 'Workshops', href: '/workshops' },
     { label: 'Why choose us', href: '/#why-us' },
   ];
 
@@ -174,7 +175,7 @@ export default function Header({
                 />
               </div>
               <span className="text-lg sm:text-xl font-bold tracking-tight text-dark-black group-hover:text-primary-orange transition-colors">
-                NoviQ Academy
+                Noviq Academy
               </span>
             </Link>
 
