@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  ArrowRight,
   Calendar,
   BookOpen,
   Radio,
@@ -18,6 +19,13 @@ import {
   Share2,
   Check,
   Menu,
+  Video,
+  FolderOpen,
+  GraduationCap,
+  PlaySquare,
+  Bell,
+  Zap,
+  ExternalLink,
 } from 'lucide-react';
 import LearnerHeader from '@/components/learner/header';
 import LearnerBottomNavigation from '@/components/learner/bottomnavigation';
@@ -33,6 +41,9 @@ import {
 function StudyDashboardContent() {
   const searchParams = useSearchParams();
   const batchIdParam = searchParams.get('id');
+  const queryString = searchParams?.toString();
+  const getStudyHref = (basePath: string) =>
+    queryString ? `${basePath}?${queryString}` : basePath;
 
   const [course, setCourse] = useState<StudyCourseDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,7 +122,9 @@ function StudyDashboardContent() {
     if (!course) return;
     let isMounted = true;
     async function checkBoard() {
-      const hasRecord = await checkHasBatchBoard(course?.batch_uuid || course?.batch_id || course?.batch_code);
+      const hasRecord = await checkHasBatchBoard(
+        course?.batch_uuid || course?.batch_id || course?.batch_code
+      );
       if (isMounted) {
         setHasBoardRecord(hasRecord);
       }
@@ -161,8 +174,13 @@ function StudyDashboardContent() {
     }
   }, [isBoardOpen, boardLoading, boardData?.messages]);
 
+  const progress = Math.min(Math.max(Number(course?.progress) || 0, 0), 100);
+  const ringRadius = 26;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference - (progress / 100) * ringCircumference;
+
   return (
-    <div className="min-h-screen flex flex-col bg-soft-cream">
+    <div className="min-h-screen flex flex-col bg-[#FDFBF8]">
       {/* 1. Header Attached */}
       <LearnerHeader />
 
@@ -178,12 +196,11 @@ function StudyDashboardContent() {
 
         {/* Dashboard Content Column */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* STATIC FIX CONTAINER: "Go to my courses" + Batch details div */}
-          {/* Fixed below header (top-16 / top-20), will NOT move with scroll */}
-          <div className="sticky top-16 sm:top-20 z-20 bg-soft-cream/95 backdrop-blur-md border-b border-soft-orange/30 shadow-2xs">
-            <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 space-y-3">
-              {/* Three lines beside left of Go to my courses - visible on other devices, hidden on desktop */}
-              <div className="flex items-center gap-2">
+          {/* Top Hero Area (Layout reference without top-right image) */}
+          <section className="w-full bg-gradient-to-b from-[#FFF3E8] via-[#FFF9F3] to-[#FDFBF8] border-b border-soft-cream">
+            <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-7 sm:pt-6 sm:pb-8">
+              {/* Top Row: Mobile Sidebar Toggle + Go to my courses */}
+              <div className="flex items-center gap-2.5 mb-5">
                 <button
                   type="button"
                   onClick={() => setIsSidebarOpen((prev) => !prev)}
@@ -195,164 +212,376 @@ function StudyDashboardContent() {
 
                 <Link
                   href="/learner/courses/dashboard"
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:py-2 rounded-xl bg-pure-white border border-soft-cream text-xs sm:text-sm font-bold text-dark-black hover:text-primary-orange hover:border-primary-orange/40 transition-all shadow-2xs cursor-pointer"
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:py-2 rounded-full bg-pure-white border border-soft-cream text-xs sm:text-sm font-bold text-dark-black hover:text-primary-orange hover:border-primary-orange/40 transition-all shadow-2xs cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4 text-primary-orange" />
                   <span>Go to my courses</span>
                 </Link>
               </div>
 
-          {/* Batch details div - Static Fix (No move with scroll) */}
-          <div className="bg-pure-white rounded-2xl border-2 border-soft-cream p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-soft-cream text-primary-orange flex items-center justify-center shrink-0 border border-soft-orange/30">
-                <Radio className="w-5 h-5 animate-pulse" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-dark-black tracking-normal truncate">
-                  See the Batch board for all the updates.
-                </p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-xs text-dark-black/70">
-                  {course?.batch_code && (
-                    <span className="inline-flex items-center gap-1 font-mono font-bold text-dark-black">
-                      <Hash className="w-3.5 h-3.5 text-primary-orange" />
-                      <span>Batch: {course.batch_code}</span>
-                    </span>
-                  )}
-                  {course?.time_display && (
-                    <span className="inline-flex items-center gap-1 font-medium text-dark-black/75">
-                      <Clock className="w-3.5 h-3.5 text-primary-orange" />
-                      <span>{course.time_display}</span>
-                    </span>
-                  )}
+              {loading ? (
+                <div className="space-y-3 max-w-2xl animate-pulse">
+                  <div className="h-5 w-36 rounded-md bg-soft-orange/30" />
+                  <div className="h-8 w-3/4 rounded-lg bg-soft-orange/30" />
+                  <div className="h-4 w-2/3 rounded bg-soft-orange/20" />
                 </div>
-              </div>
-            </div>
-
-            {hasBoardRecord ? (
-              <button
-                type="button"
-                onClick={() => setIsBoardOpen(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl bg-primary-orange hover:bg-soft-orange text-pure-white hover:text-dark-black text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer shrink-0"
-              >
-                <Radio className="w-4 h-4 animate-pulse" />
-                <span>Open Batch Board</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl bg-dark-black/10 text-dark-black/40 border border-soft-cream text-xs sm:text-sm font-bold transition-all shadow-none cursor-not-allowed shrink-0 select-none opacity-80"
-                title="No batch board record available for this batch"
-              >
-                <Radio className="w-4 h-4 opacity-50" />
-                <span>Open Batch Board</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ============================================================== */}
-      {/* SCROLLABLE MAIN CONTENT AREA (Scrolls freely underneath)       */}
-      {/* ============================================================== */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28">
-        {loading ? (
-          <div className="py-24 text-center bg-pure-white rounded-2xl border border-soft-cream shadow-xs">
-            <div className="w-9 h-9 border-3 border-primary-orange border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs sm:text-sm text-dark-black/60 font-semibold">
-              Loading course details...
-            </p>
-          </div>
-        ) : !course ? (
-          <div className="py-16 px-6 text-center bg-pure-white rounded-2xl border border-soft-cream shadow-xs max-w-lg mx-auto">
-            <h3 className="text-lg font-bold text-dark-black">No Course Found</h3>
-            <p className="text-xs sm:text-sm text-dark-black/70 mt-1">
-              Please select a course from your enrolled curriculum.
-            </p>
-            <Link
-              href="/learner/courses/dashboard"
-              className="inline-block mt-4 px-4 py-2 bg-primary-orange text-pure-white rounded-lg text-xs font-bold"
-            >
-              Go to my courses
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Main Study Card */}
-            <div className="bg-pure-white rounded-2xl border-2 border-soft-cream shadow-xs p-5 sm:p-7 space-y-6">
-              {/* below it write: course name + course topics */}
-              <div className="space-y-3.5 pb-5 border-b border-soft-cream">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-soft-cream border border-soft-orange/40 text-[11px] font-bold text-primary-orange uppercase tracking-wider">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>Enrolled Course</span>
-                </div>
-
-                {/* Course Name */}
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-dark-black tracking-tight leading-snug">
-                  {course.course_title}
-                </h1>
-
-                {/* Share Course (Button with share icon, links/shares app/courses/opencourse/page.tsx) */}
-                <div className="pt-1 flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleShareCourse}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-soft-cream hover:bg-soft-orange/30 text-dark-black hover:text-primary-orange border border-soft-orange/50 text-xs sm:text-sm font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-                    aria-label="Share Course"
-                  >
-                    {shareCopied ? (
-                      <Check className="w-4 h-4 text-green-600 shrink-0" />
-                    ) : (
-                      <Share2 className="w-4 h-4 text-primary-orange shrink-0" />
-                    )}
-                    <span>{shareCopied ? 'Link Copied!' : 'Share Course'}</span>
-                  </button>
-
+              ) : !course ? (
+                <div className="py-10 px-6 text-center bg-pure-white rounded-2xl border border-soft-cream shadow-xs max-w-lg">
+                  <h3 className="text-lg font-bold text-dark-black">No Course Found</h3>
+                  <p className="text-xs sm:text-sm text-dark-black/70 mt-1">
+                    Please select a course from your enrolled curriculum.
+                  </p>
                   <Link
-                    href={`/courses/opencourse?id=${course.course_id}`}
-                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-dark-black/60 hover:text-primary-orange transition-colors"
+                    href="/learner/courses/dashboard"
+                    className="inline-block mt-4 px-4 py-2 bg-primary-orange text-pure-white rounded-lg text-xs font-bold"
                   >
-                    <span>View course page</span>
+                    Go to my courses
                   </Link>
                 </div>
-              </div>
-
-              {/* and Write Course will start from the course.start_date.(Highlight) */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-primary-orange/10 border-2 border-primary-orange shadow-2xs">
-                <div className="flex items-start sm:items-center gap-3">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pure-white text-primary-orange flex items-center justify-center shrink-0 shadow-2xs border border-primary-orange/30">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-primary-orange block sm:hidden">
-                      Schedule Notice
-                    </span>
-                    <p className="text-sm sm:text-base font-extrabold text-dark-black">
-                      Course will start from{' '}
-                      <span className="text-primary-orange bg-pure-white px-2.5 py-0.5 rounded-md border border-primary-orange/30 inline-block mt-0.5 sm:mt-0 font-extrabold">
-                        {course.start_date}
+              ) : (
+                <>
+                  {/* Enrolled Course Heading */}
+                  <div className="max-w-3xl space-y-2.5">
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-primary-orange">
+                      <span className="inline-flex items-center gap-1.5 uppercase tracking-wider">
+                        <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                        <span>Enrolled Course</span>
                       </span>
+                      {course.batch_code && (
+                        <>
+                          <span aria-hidden="true" className="text-dark-black/30">
+                            ·
+                          </span>
+                          <span className="inline-flex items-center gap-1 font-mono text-dark-black/80">
+                            <Hash className="w-3.5 h-3.5 text-primary-orange" />
+                            <span>Batch {course.batch_code}</span>
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-dark-black tracking-tight leading-tight">
+                      {course.course_title}
+                    </h1>
+
+                    <p className="text-xs sm:text-sm text-dark-black/70 leading-relaxed">
+                      All the links and course resources will be shared once the course has started.
                     </p>
                   </div>
-                </div>
-              </div>
 
-              {/* and All the Links, course Resources will be shared once course started. */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-soft-cream/60 border border-soft-orange/30">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-pure-white text-primary-orange flex items-center justify-center shrink-0 border border-soft-cream shadow-2xs">
-                    <Info className="w-4 h-4" />
+                  {/* Top 3-Card Row: Course Progress | Next Live Class | Quick Actions */}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Card 1: Course Progress */}
+                    <div className="bg-pure-white rounded-2xl border border-soft-cream shadow-xs p-5 flex items-center gap-4">
+                      <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                        <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r={ringRadius}
+                            fill="none"
+                            stroke="#F7F2E8"
+                            strokeWidth="6"
+                          />
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r={ringRadius}
+                            fill="none"
+                            stroke="#FF7A30"
+                            strokeWidth="6"
+                            strokeLinecap="round"
+                            strokeDasharray={ringCircumference}
+                            strokeDashoffset={ringOffset}
+                          />
+                        </svg>
+                        <span className="absolute text-sm font-extrabold text-dark-black tabular-nums">
+                          {progress}%
+                        </span>
+                      </div>
+
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div>
+                          <h2 className="text-sm sm:text-base font-bold text-dark-black">
+                            Course Progress
+                          </h2>
+                          <p className="text-xs text-dark-black/65 tabular-nums">
+                            {progress >= 100
+                              ? 'Curriculum completed'
+                              : `${progress}% curriculum completed`}
+                          </p>
+                        </div>
+                        <div className="w-full h-2 bg-soft-cream rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary-orange rounded-full transition-all duration-500"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card 2: Next Live Class (taps open batches.live_link in _blank) */}
+                    {course.live_link ? (
+                      <a
+                        href={course.live_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-pure-white rounded-2xl border border-soft-cream hover:border-primary-orange shadow-xs hover:shadow-md transition-all p-5 flex flex-col justify-between gap-3 group"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#FFF3E8] text-primary-orange flex items-center justify-center shrink-0">
+                            <Radio className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <h2 className="text-sm sm:text-base font-bold text-dark-black group-hover:text-primary-orange transition-colors">
+                              Next Live Class
+                            </h2>
+                            <div className="flex items-center gap-1.5 text-xs text-dark-black/75">
+                              <Calendar className="w-3.5 h-3.5 text-primary-orange shrink-0" />
+                              <span className="truncate">{course.start_date}</span>
+                            </div>
+                            {course.time_display && (
+                              <div className="flex items-center gap-1.5 text-xs text-dark-black/75">
+                                <Clock className="w-3.5 h-3.5 text-primary-orange shrink-0" />
+                                <span className="truncate">{course.time_display}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary-orange group-hover:bg-soft-orange text-pure-white group-hover:text-dark-black text-xs font-bold transition-colors whitespace-nowrap">
+                            <Video className="w-3.5 h-3.5" />
+                            <span>Join Class</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </span>
+                        </div>
+                      </a>
+                    ) : (
+                      <div className="bg-pure-white rounded-2xl border border-soft-cream shadow-xs p-5 flex flex-col justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#FFF3E8] text-primary-orange flex items-center justify-center shrink-0">
+                            <Radio className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <h2 className="text-sm sm:text-base font-bold text-dark-black">
+                              Next Live Class
+                            </h2>
+                            <div className="flex items-center gap-1.5 text-xs text-dark-black/75">
+                              <Calendar className="w-3.5 h-3.5 text-primary-orange shrink-0" />
+                              <span className="truncate">{course.start_date}</span>
+                            </div>
+                            {course.time_display && (
+                              <div className="flex items-center gap-1.5 text-xs text-dark-black/75">
+                                <Clock className="w-3.5 h-3.5 text-primary-orange shrink-0" />
+                                <span className="truncate">{course.time_display}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <span
+                            title="Live class link will be available once shared by your mentor"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-dark-black/8 text-dark-black/45 border border-soft-cream text-xs font-bold cursor-not-allowed whitespace-nowrap"
+                          >
+                            <Video className="w-3.5 h-3.5" />
+                            <span>Join Class</span>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Card 3: Quick Actions */}
+                    <div className="bg-pure-white rounded-2xl border border-soft-cream shadow-xs p-5 flex flex-col justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-[#FFF3E8] text-primary-orange flex items-center justify-center shrink-0">
+                          <Zap className="w-4 h-4" />
+                        </div>
+                        <h2 className="text-sm sm:text-base font-bold text-dark-black">
+                          Quick Actions
+                        </h2>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2.5">
+                        <Link
+                          href={getStudyHref('/learner/study/resources')}
+                          className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-xl bg-[#FDFBF8] border border-soft-cream hover:border-primary-orange/60 hover:bg-[#FFF7F0] transition-colors text-center group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-pure-white border border-soft-cream flex items-center justify-center text-primary-orange group-hover:scale-105 transition-transform">
+                            <FolderOpen className="w-4 h-4" />
+                          </div>
+                          <span className="text-[11px] font-bold text-dark-black">Resources</span>
+                        </Link>
+
+                        <Link
+                          href={getStudyHref('/learner/study/exams')}
+                          className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-xl bg-[#FDFBF8] border border-soft-cream hover:border-primary-orange/60 hover:bg-[#FFF7F0] transition-colors text-center group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-pure-white border border-soft-cream flex items-center justify-center text-primary-orange group-hover:scale-105 transition-transform">
+                            <GraduationCap className="w-4 h-4" />
+                          </div>
+                          <span className="text-[11px] font-bold text-dark-black">Exams</span>
+                        </Link>
+
+                        <Link
+                          href={getStudyHref('/learner/study/classrecordings')}
+                          className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-xl bg-[#FDFBF8] border border-soft-cream hover:border-primary-orange/60 hover:bg-[#FFF7F0] transition-colors text-center group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-pure-white border border-soft-cream flex items-center justify-center text-primary-orange group-hover:scale-105 transition-transform">
+                            <PlaySquare className="w-4 h-4" />
+                          </div>
+                          <span className="text-[11px] font-bold text-dark-black">Recordings</span>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs sm:text-sm font-semibold text-dark-black/85 leading-relaxed pt-0.5">
-                    All the Links, course Resources will be shared once course started.
-                  </p>
+                </>
+              )}
+            </div>
+          </section>
+
+          {/* Bottom 2-Column Main Content Area */}
+          {!loading && course && (
+            <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28 md:pb-14">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                {/* Left Section (Replaces Continue Learning — Share Course or View Course, NO modules) */}
+                <div className="lg:col-span-7 bg-pure-white rounded-2xl border border-soft-cream shadow-xs p-5 sm:p-6 flex flex-col justify-between gap-5">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-3 pb-4 border-b border-soft-cream">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-[#FFF3E8] text-primary-orange flex items-center justify-center shrink-0">
+                          <Share2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h2 className="text-base sm:text-lg font-bold text-dark-black">
+                            Share or View Course
+                          </h2>
+                          <p className="text-xs text-dark-black/65">
+                            Explore the public course overview or invite peers to join.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Link
+                        href={`/courses/opencourse?id=${course.course_id}`}
+                        className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-primary-orange hover:underline whitespace-nowrap shrink-0"
+                      >
+                        <span>View Course</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+
+                    {/* Schedule Notice */}
+                    <div className="p-4 rounded-2xl bg-[#FFF7F0] border border-soft-orange/45 flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-pure-white text-primary-orange flex items-center justify-center shrink-0 border border-soft-orange/30">
+                        <Calendar className="w-4 h-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-dark-black">
+                          Course starts from{' '}
+                          <span className="text-primary-orange">{course.start_date}</span>
+                        </p>
+                        <p className="text-xs text-dark-black/70 leading-relaxed flex items-start gap-1.5">
+                          <Info className="w-3.5 h-3.5 text-primary-orange shrink-0 mt-0.5" />
+                          <span>
+                            All the links and course resources will be shared once the course has started.
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Primary Share & View Actions */}
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleShareCourse}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary-orange hover:bg-soft-orange text-pure-white hover:text-dark-black text-xs sm:text-sm font-bold transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+                      aria-label="Share Course"
+                    >
+                      {shareCopied ? (
+                        <Check className="w-4 h-4 shrink-0" />
+                      ) : (
+                        <Share2 className="w-4 h-4 shrink-0" />
+                      )}
+                      <span>{shareCopied ? 'Link Copied!' : 'Share Course'}</span>
+                    </button>
+
+                    <Link
+                      href={`/courses/opencourse?id=${course.course_id}`}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-soft-cream hover:bg-soft-orange/40 text-dark-black border border-soft-orange/40 text-xs sm:text-sm font-bold transition-colors whitespace-nowrap"
+                    >
+                      <span>View Course</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-primary-orange" />
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Right Section (Recent Updates — Open Batch Board Button) */}
+                <div className="lg:col-span-5 bg-pure-white rounded-2xl border border-soft-cream shadow-xs p-5 sm:p-6 flex flex-col justify-between gap-5">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-3 pb-4 border-b border-soft-cream">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-[#FFF3E8] text-primary-orange flex items-center justify-center shrink-0">
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <h2 className="text-base sm:text-lg font-bold text-dark-black">
+                          Recent Updates
+                        </h2>
+                      </div>
+                      <span className="text-xs font-bold text-primary-orange whitespace-nowrap">
+                        Batch Board
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-[#FDFBF8] border border-soft-cream space-y-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-[#FFF3E8] text-primary-orange flex items-center justify-center shrink-0">
+                          <Radio className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm font-bold text-dark-black truncate">
+                            See the Batch board for all updates
+                          </p>
+                          <p className="text-xs text-dark-black/65 truncate">
+                            {course.batch_code ? `Batch ${course.batch_code}` : 'Active Batch'}
+                            {course.time_display ? ` · ${course.time_display}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-dark-black/70 leading-relaxed">
+                        Instructor announcements, schedule notices, and session links are posted directly to your batch board.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    {hasBoardRecord ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsBoardOpen(true)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary-orange hover:bg-soft-orange text-pure-white hover:text-dark-black text-xs sm:text-sm font-bold transition-colors shadow-xs cursor-pointer"
+                      >
+                        <Radio className="w-4 h-4" />
+                        <span>Open Batch Board</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-dark-black/8 text-dark-black/45 border border-soft-cream text-xs sm:text-sm font-bold cursor-not-allowed select-none"
+                        title="No batch board record available for this batch"
+                      >
+                        <Radio className="w-4 h-4 opacity-50" />
+                        <span>Open Batch Board</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-      </main>
+            </main>
+          )}
         </div>
       </div>
 

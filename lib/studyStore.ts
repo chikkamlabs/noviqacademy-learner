@@ -10,6 +10,7 @@ export interface StudyCourseDetails {
   batch_code?: string;
   time_display?: string;
   progress?: number;
+  live_link?: string;
 }
 
 export interface StudyBatchBoardMessage {
@@ -176,6 +177,7 @@ export async function getStudyDetails(batchIdParam?: string | null): Promise<Stu
     let fromTime = '';
     let toTime = '';
     let batchProgress = 0;
+    let liveLink = '';
     let courseUuid = matchedReg?.course_id || '';
 
     if (targetBatchId) {
@@ -185,7 +187,7 @@ export async function getStudyDetails(batchIdParam?: string | null): Promise<Stu
 
       let batchQuery = supabase
         .from('batches')
-        .select('id, batch_id, course_id, start_date, end_date, from_time, to_time, progress');
+        .select('id, batch_id, course_id, start_date, end_date, from_time, to_time, progress, live_link');
 
       if (isUuid) {
         batchQuery = batchQuery.or(`id.eq.${targetBatchId},batch_id.eq.${targetBatchId}`);
@@ -201,6 +203,7 @@ export async function getStudyDetails(batchIdParam?: string | null): Promise<Stu
         startDate = batchData.start_date || '';
         fromTime = batchData.from_time || '';
         toTime = batchData.to_time || '';
+        liveLink = batchData.live_link || '';
         if (batchData.progress !== undefined && batchData.progress !== null) {
           batchProgress = Number(batchData.progress) || 0;
         }
@@ -272,6 +275,7 @@ export async function getStudyDetails(batchIdParam?: string | null): Promise<Stu
       batch_code: batchCode,
       time_display: timeDisplay,
       progress: batchProgress,
+      live_link: liveLink || undefined,
     };
   } catch (err) {
     console.warn('Exception in getStudyDetails:', err);

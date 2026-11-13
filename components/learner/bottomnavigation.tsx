@@ -3,7 +3,7 @@ import { Home, BookOpen, User } from 'lucide-react';
 
 export default function LearnerBottomNavigation() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-pure-white border-t border-soft-cream shadow-sm">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-pure-white border-t border-soft-cream shadow-sm">
       <div className="max-w-md mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Left: Home Icon */}

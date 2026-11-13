@@ -370,9 +370,20 @@ function ExamsPageContent() {
                         </div>
                       </div>
 
-                      {/* Right: Start Exam (Only allow to tap Start Exam if batch_exams.conduct = true) */}
+                      {/* Right: Start Exam (Only allow to tap Start Exam if batch_exams.conduct = true and not already given) */}
                       <div className="sm:self-center shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-soft-cream">
-                        {exam.conduct ? (
+                        {exam.alreadyGiven ? (
+                          <button
+                            type="button"
+                            disabled
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-bold border border-emerald-200 cursor-not-allowed select-none opacity-85 w-full sm:w-auto"
+                            aria-label={`Exam ${exam.title} already completed`}
+                            title="You have already completed this exam"
+                          >
+                            <CheckCircle2 className="w-4 h-4 shrink-0" />
+                            <span>Already Given</span>
+                          </button>
+                        ) : exam.conduct ? (
                           <button
                             type="button"
                             onClick={() => setSelectedExamToStart(exam)}
@@ -467,12 +478,29 @@ function ExamsPageContent() {
                 type="button"
                 disabled={isStarting}
                 onClick={async () => {
+                  if (selectedExamToStart.alreadyGiven) {
+                    setSelectedExamToStart(null);
+                    return;
+                  }
                   setIsStarting(true);
                   try {
                     const res = await startExamSession(
                       selectedExamToStart.exam_id,
-                      batchIdParam || selectedExamToStart.batch_id
+                      batchIdParam || selectedExamToStart.batch_id,
+                      selectedExamToStart.id
                     );
+                    if (res.alreadyGiven) {
+                      setExams((prev) =>
+                        prev.map((item) =>
+                          item.id === selectedExamToStart.id
+                            ? { ...item, alreadyGiven: true }
+                            : item
+                        )
+                      );
+                      setSelectedExamToStart(null);
+                      setIsStarting(false);
+                      return;
+                    }
                     setSelectedExamToStart(null);
                     setIsStarting(false);
                     router.push(

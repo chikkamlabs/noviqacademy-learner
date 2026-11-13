@@ -14,6 +14,7 @@ export interface BatchExamItem {
   description: string | null;
   total_q: number;
   created_at?: string;
+  alreadyGiven?: boolean;
 }
 
 export interface BatchExamsResponse {
@@ -39,6 +40,87 @@ export function formatScheduleDateTime(dtStr?: string | null): string {
   } catch {
     return dtStr;
   }
+}
+
+interface SubmittedConductedRow {
+  id: string;
+  exam_id: string;
+  batch_exam: string | null;
+  member_id: string;
+  batch_id: string | null;
+}
+
+async function fetchLearnerSubmittedExams(
+  resolvedBatchUuid: string | null
+): Promise<SubmittedConductedRow[]> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return [];
+
+    let blQuery = supabase
+      .from('batch_learners')
+      .select('id, batch_id')
+      .eq('learner_id', user.id);
+
+    if (resolvedBatchUuid) {
+      blQuery = blQuery.eq('batch_id', resolvedBatchUuid);
+    }
+
+    const { data: blRows } = await blQuery;
+    const memberBatchMap = new Map<string, string>();
+    const memberIds: string[] = [];
+
+    for (const row of blRows || []) {
+      if (row.id) {
+        memberIds.push(row.id);
+        if (row.batch_id) {
+          memberBatchMap.set(row.id, row.batch_id);
+        }
+      }
+    }
+
+    if (!memberIds.includes(user.id)) {
+      memberIds.push(user.id);
+    }
+
+    if (memberIds.length === 0) return [];
+
+    const { data: ecRows } = await supabase
+      .from('exams_conducted')
+      .select('id, exam_id, batch_exam, member_id')
+      .in('member_id', memberIds)
+      .eq('submitted', true);
+
+    return (ecRows || []).map((row) => ({
+      id: row.id,
+      exam_id: row.exam_id,
+      batch_exam: row.batch_exam || null,
+      member_id: row.member_id,
+      batch_id: memberBatchMap.get(row.member_id) || null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function isExamAlreadyGiven(
+  submittedRows: SubmittedConductedRow[],
+  batchExamId: string,
+  courseExamId: string,
+  batchUuid: string
+): boolean {
+  return submittedRows.some((row) => {
+    if (row.batch_exam) {
+      return row.batch_exam === batchExamId;
+    }
+    return (
+      row.exam_id === courseExamId &&
+      (!row.batch_id || row.batch_id === batchUuid)
+    );
+  });
 }
 
 /**
@@ -156,8 +238,11 @@ export async function getBatchExams(
         } | null;
       }
 
+      const submittedRows = await fetchLearnerSubmittedExams(resolvedBatchUuid);
+
       for (const row of data as unknown as RawExamRow[]) {
         const ce = row.course_exams;
+        const alreadyGiven = isExamAlreadyGiven(submittedRows, row.id, row.exam_id, row.batch_id);
         formattedExams.push({
           id: row.id,
           batch_id: row.batch_id,
@@ -172,6 +257,7 @@ export async function getBatchExams(
           description: ce?.description || null,
           total_q: Number(ce?.total_q) || 0,
           created_at: row.created_at,
+          alreadyGiven,
         });
       }
 
@@ -212,8 +298,11 @@ export async function getBatchExams(
           created_at?: string;
         }
 
+        const submittedRows = await fetchLearnerSubmittedExams(resolvedBatchUuid);
+
         const resolvedList: BatchExamItem[] = (beRaw as RawBeFallback[]).map((be) => {
           const detail = ceMap.get(be.exam_id);
+          const alreadyGiven = isExamAlreadyGiven(submittedRows, be.id, be.exam_id, be.batch_id);
           return {
             id: be.id,
             batch_id: be.batch_id,
@@ -228,6 +317,7 @@ export async function getBatchExams(
             description: detail?.description || null,
             total_q: Number(detail?.total_q) || 0,
             created_at: be.created_at,
+            alreadyGiven,
           };
         });
 

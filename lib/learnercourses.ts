@@ -20,6 +20,7 @@ export interface LearnerBoughtCourse {
   status: string;
   amount: number;
   currency: string;
+  progress: number;
 }
 
 /**
@@ -135,11 +136,12 @@ export async function getLearnerBoughtCourses(): Promise<LearnerBoughtCourse[]> 
       let fromTime = '';
       let toTime = '';
       let language = 'English';
+      let batchProgress = 0;
 
       if (reg.batch_id) {
         const { data: batchData } = await supabase
           .from('batches')
-          .select('id, batch_id, start_date, end_date, from_time, to_time, language, region')
+          .select('id, batch_id, start_date, end_date, from_time, to_time, language, region, progress')
           .or(`id.eq.${reg.batch_id},batch_id.eq.${reg.batch_id}`)
           .maybeSingle();
 
@@ -151,6 +153,7 @@ export async function getLearnerBoughtCourses(): Promise<LearnerBoughtCourse[]> 
           fromTime = batchData.from_time || '';
           toTime = batchData.to_time || '';
           language = batchData.language || 'English';
+          batchProgress = Number(batchData.progress) || 0;
         }
       }
 
@@ -180,6 +183,7 @@ export async function getLearnerBoughtCourses(): Promise<LearnerBoughtCourse[]> 
         status: reg.status || 'active',
         amount: Number(reg.amount) || 0,
         currency: reg.currency || 'INR',
+        progress: Math.min(Math.max(batchProgress, 0), 100),
       });
     }
 
